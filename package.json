@@ -1,0 +1,56 @@
+{
+  "name": "test-inventory-mcp",
+  "version": "0.0.0",
+  "description": "MCP server for test-inventory: AI agents read a project's tests from source code, without running them.",
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "testing",
+    "playwright",
+    "vitest",
+    "test-inventory",
+    "ai-agents"
+  ],
+  "homepage": "https://github.com/Huldoser/test-inventory-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/Huldoser/test-inventory-mcp/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Huldoser/test-inventory-mcp.git"
+  },
+  "license": "MIT",
+  "author": "Andrey Rychkov",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "coverage": "vitest run --coverage",
+    "licenses": "node scripts/check-licenses.ts",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write . --ignore-path .gitignore --ignore-path .prettierignore --ignore-path .git/info/exclude",
+    "format:check": "node scripts/format-check.ts",
+    "changeset": "changeset"
+  },
+  "devDependencies": {
+    "@changesets/changelog-github": "^1.0.1",
+    "@changesets/cli": "^3.0.3",
+    "@types/node": "~22.12.0",
+    "@vitest/coverage-v8": "5.0.5",
+    "eslint": "~10.13.0",
+    "prettier": "3.9.10",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "~8.71.2",
+    "vitest": "5.0.5"
+  }
+}
