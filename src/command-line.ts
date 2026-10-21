@@ -59,7 +59,9 @@ export function parseCommandLine(args: string[], env: NodeJS.ProcessEnv, cwd: st
   const given = values.root ?? env.CLAUDE_PROJECT_DIR ?? cwd;
   let root: string;
   try {
-    root = realpathSync(path.resolve(cwd, given));
+    // Native, like the realpath of project.ts: on Windows the JavaScript one keeps 8.3 short names such as RUNNER~1,
+    // and a folder inside the project would then not start with its root.
+    root = realpathSync.native(path.resolve(cwd, given));
   } catch {
     return usageError(`the project folder "${given}" does not exist.`);
   }

@@ -5,7 +5,7 @@ import { createMcpHandler } from '@modelcontextprotocol/server';
 import type { ServerConfig } from '../src/project.ts';
 import { createServer } from '../src/server.ts';
 
-export const fixtures = realpathSync(path.resolve(import.meta.dirname, 'fixtures'));
+export const fixtures = realpathSync.native(path.resolve(import.meta.dirname, 'fixtures'));
 
 export const tradingWeb: ServerConfig = {
   root: path.join(fixtures, 'trading-web'),

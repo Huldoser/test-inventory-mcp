@@ -1,14 +1,14 @@
-import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import type { ServerConfig } from '../src/project.ts';
+import { parseCommandLine } from '../src/command-line.ts';
 import { call, callError, connect, type Connection } from './helpers.ts';
 
-// A desk project next to a folder outside it, so a link and a path can try to reach out.
-const work = realpathSync(mkdtempSync(path.join(tmpdir(), 'test-inventory-mcp-')));
+// A desk project next to a folder outside it, so a link and a path can try to reach out. The temporary folder is used
+// as given: on Windows it has 8.3 short names (RUNNER~1), which the root and the folders of tool calls must agree on.
+const work = mkdtempSync(path.join(tmpdir(), 'test-inventory-mcp-'));
 const root = path.join(work, 'desk');
-const config: ServerConfig = { root, framework: 'playwright', patterns: ['tests/**/*.spec.ts'] };
 let connection: Connection;
 
 beforeAll(async () => {
@@ -28,7 +28,9 @@ beforeAll(async () => {
   );
   // A junction needs no extra rights on Windows; elsewhere the type is ignored.
   symlinkSync(path.join(work, 'outside'), path.join(root, 'shared'), 'junction');
-  connection = await connect(config);
+  const command = parseCommandLine(['tests/**/*.spec.ts', '--framework', 'playwright', '--root', root], {}, work);
+  if (!('config' in command)) throw new Error(command.text);
+  connection = await connect(command.config);
 });
 
 afterAll(async () => {
