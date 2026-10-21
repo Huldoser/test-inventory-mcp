@@ -91,7 +91,12 @@ jobs:
       - run: npm ci --ignore-scripts
       # The tarball from the pack job is published as it is, with a short-lived token npm issues for this run through
       # trusted publishing; no npm token is stored anywhere. The tag and the release are created through the API.
+      # Only for the first release: npm's trusted publisher can be added only to a package that exists, so 0.1.0 is
+      # published with a granular npm token kept in the `npm` environment. The `env` lines go once the trusted
+      # publisher is set up; an empty NODE_AUTH_TOKEN would stop trusted publishing.
       - id: publish
         uses: changesets/action/publish@ae32849d5ba541f9ae29e40e22a623bc13562f51 # v2.1.2
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         with:
           pack-dir-artifact-id: ${{ needs.pack.outputs.pack-dir-artifact-id }}
