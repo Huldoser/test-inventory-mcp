@@ -20,6 +20,8 @@ export default defineConfig(
       '@typescript-eslint/consistent-type-imports': 'error',
       // Template literals in messages interpolate numbers and booleans on purpose.
       '@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true, allowBoolean: true }],
+      // `as string` is used where the types allow null but the code rules it out; `!` is banned by strict.
+      '@typescript-eslint/non-nullable-type-assertion-style': 'off',
     },
   },
 
