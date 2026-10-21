@@ -83,7 +83,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -93,7 +93,39 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      - run: npm run licenses
+      - run: npm run test:pack
+      - if: runner.os == 'Linux'
+        run: npm run publint
+      - if: runner.os == 'Linux'
+        run: npm run licenses
+
+  oldest-node:
+    name: Packed server on Node 22.12.0
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # The scripts need a newer Node.js to run as TypeScript, so the package is built and packed with Node 24.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm pack --pack-destination "$RUNNER_TEMP"
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22.12.0
+      # The package under test is installed from its tarball, as a user installs it, so no lockfile applies.
+      - name: Install the packed server
+        working-directory: ${{ runner.temp }}
+        run: | # zizmor: ignore[adhoc-packages]
+          mkdir -p app/tests && cd app
+          npm init --yes > /dev/null
+          npm install --no-audit --no-fund ../test-inventory-mcp-*.tgz
+          printf "import { test } from '@playwright/test';\ntest.skip('fills a limit order at the limit price', async () => {});\n" > tests/orders.spec.ts
+      - run: node scripts/ask-server.mjs "$RUNNER_TEMP/app"
 
   secrets:
     name: Secret scan

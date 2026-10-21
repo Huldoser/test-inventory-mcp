@@ -12,10 +12,11 @@ Report it privately through
 not in a public issue. Say which version is affected and how to reproduce it: the client, the tool call and the files
 it read.
 
-The server talks to its client over standard input and output only. It reads test files inside the directory it was
-started for and never runs them. A tool call that reads outside that directory, runs code from the scanned project,
-writes a file, reaches the network, or puts anything other than MCP messages on standard output is a vulnerability.
-So is a problem in a dependency that a tool call exposes.
+The server talks to its client over standard input and output only. It reads the test files its globs match inside
+the project folder, and, for Vitest, the files that symbolic links among them point to, as Vitest does. It never runs
+them. A tool call that reads other files, runs code from the scanned project, writes a file, reaches the network, or
+puts anything other than MCP messages on standard output is a vulnerability. So is a problem in a dependency that a
+tool call exposes.
 
 Test titles, skip reasons and other text in the answers come from the scanned files as they are written. A client
 should treat them as content of that project, not as instructions.
