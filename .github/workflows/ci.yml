@@ -174,3 +174,15 @@ jobs:
       # actionlint also runs the runner's shellcheck over each run step.
       - run: '"$RUNNER_TEMP/actionlint" -no-color'
       - run: '"$RUNNER_TEMP/zizmor" --offline --format=github .github/workflows'
+
+  # The one check the main ruleset requires, so jobs can be added or renamed without changing the ruleset. It fails when
+  # a job failed or was cancelled.
+  ci:
+    name: ci
+    if: always()
+    needs: [test, lint, package, oldest-node, secrets, workflows]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
