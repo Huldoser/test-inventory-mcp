@@ -14,7 +14,8 @@ const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => key
   string
 >;
 
-describe('the built server over stdio', () => {
+// Each test starts Node.js; on a slow CI runner, as macos-15-intel, the first start alone takes 3 to 5 seconds.
+describe('the built server over stdio', { timeout: 20_000 }, () => {
   it.each([
     ['2026-07-28', { versionNegotiation: { mode: { pin: '2026-07-28' as const } } }],
     ['2025-11-25', {}],
