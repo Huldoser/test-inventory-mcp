@@ -120,6 +120,10 @@
               "description": "Tests per annotation type.",
               "type": "object"
             },
+            "benchmarkCount": {
+              "minimum": 0,
+              "type": "integer"
+            },
             "conditionalCount": {
               "minimum": 0,
               "type": "integer"
@@ -221,6 +225,7 @@
             "inConditionCount",
             "inFunctionCount",
             "typeTestCount",
+            "benchmarkCount",
             "diagnosticCount",
             "tagCounts",
             "annotationCounts"
@@ -421,6 +426,21 @@
               "comments",
               "locks",
               "meta",
+              "hooks",
+              "timeout",
+              "isSlow",
+              "slowCondition",
+              "retries",
+              "retryDelay",
+              "retryCondition",
+              "repeats",
+              "fixtures",
+              "expectCount",
+              "expectedAssertions",
+              "expectsAssertions",
+              "hasEmptyBody",
+              "steps",
+              "isBenchmark",
               "isParameterized",
               "caseCount",
               "isInLoop",
@@ -562,6 +582,46 @@
             }
           ]
         },
+        "HookCounts": {
+          "description": "How many hooks of each kind are registered, including by helper functions called there.",
+          "properties": {
+            "afterAll": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "afterEach": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "aroundAll": {
+              "description": "Vitest only.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "aroundEach": {
+              "description": "Vitest only.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "beforeAll": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "beforeEach": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "beforeAll",
+            "beforeEach",
+            "afterEach",
+            "afterAll",
+            "aroundEach",
+            "aroundAll"
+          ],
+          "type": "object"
+        },
         "MetaValue": {
           "anyOf": [
             {
@@ -605,6 +665,38 @@
             }
           ],
           "description": "Where a test's state is set: on the test, on a describe around it, or at file level. Other values may be added in later releases."
+        },
+        "Step": {
+          "properties": {
+            "depth": {
+              "description": "0 for a step directly in the test, 1 for a step inside it, and so on.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "hasDynamicTitle": {
+              "type": "boolean"
+            },
+            "isSkipped": {
+              "description": "Declared with `test.step.skip()`.",
+              "type": "boolean"
+            },
+            "lineStart": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "title": {
+              "description": "The title, or its source text when it can't be worked out.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "title",
+            "hasDynamicTitle",
+            "lineStart",
+            "depth",
+            "isSkipped"
+          ],
+          "type": "object"
         },
         "TestState": {
           "anyOf": [
@@ -737,8 +829,36 @@
                 ],
                 "description": "Where a helper imported from another file writes the test; the record's location is then the call that registers it. Null for code written in the scanned file."
               },
+              "expectCount": {
+                "description": "Calls of `expect()`, `expect.soft()` and `expect.poll()` written in the body, each counted once.",
+                "minimum": 0,
+                "type": "integer"
+              },
+              "expectedAssertions": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Vitest `expect.assertions(n)` in the body."
+              },
+              "expectsAssertions": {
+                "description": "Vitest `expect.hasAssertions()` in the body.",
+                "type": "boolean"
+              },
               "fileName": {
                 "type": "string"
+              },
+              "fixtures": {
+                "description": "Names the test function takes from its context, then those of the `beforeEach`, `afterEach` and `aroundEach` hooks around it, once each. Vitest's own context keys, such as `expect` and `task`, are left out.",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
               },
               "fullName": {
                 "description": "`suitePath` and `title` joined with \" > \".",
@@ -752,12 +872,24 @@
                 "description": "The title could not be resolved to a fixed string, so `title` holds its source text.",
                 "type": "boolean"
               },
+              "hasEmptyBody": {
+                "description": "The test function has no statements, comments aside.",
+                "type": "boolean"
+              },
+              "hooks": {
+                "$ref": "#/definitions/HookCounts",
+                "description": "Every hook that runs around the test: those of the file and of each describe around it."
+              },
               "id": {
                 "description": "Derived from the file path, the describe titles, the title and its position among tests with the same title.",
                 "pattern": "^[0-9a-f]{16}$",
                 "type": "string"
               },
               "isActive": {
+                "type": "boolean"
+              },
+              "isBenchmark": {
+                "description": "Vitest 5 benchmark: in a benchmark file, or using the `bench` fixture. Plain `vitest` doesn't run it.",
                 "type": "boolean"
               },
               "isConditional": {
@@ -802,6 +934,10 @@
                 "type": "boolean"
               },
               "isSkipped": {
+                "type": "boolean"
+              },
+              "isSlow": {
+                "description": "Playwright `test.slow()` applies: the runner triples the timeout.",
                 "type": "boolean"
               },
               "isTodo": {
@@ -850,6 +986,56 @@
                 "description": "Path from the project root, with `/` separators.",
                 "type": "string"
               },
+              "repeats": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Vitest only: how many times the runner runs the test again after the first run."
+              },
+              "retries": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "How many times the runner retries the test when it fails; null when the file sets none."
+              },
+              "retryCondition": {
+                "description": "Vitest only: source text of the `retry` object's `condition`, a RegExp or a function.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "retryDelay": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Vitest only: milliseconds between retries, from the `retry` object (4.1)."
+              },
+              "slowCondition": {
+                "description": "Source text of the condition of the `test.slow()` that applies; null when unconditional or not slow.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "state": {
                 "$ref": "#/definitions/TestState"
               },
@@ -876,6 +1062,13 @@
                 ],
                 "description": "null for active tests."
               },
+              "steps": {
+                "description": "Playwright `test.step()` and `test.step.skip()` calls in the body, in source order.",
+                "items": {
+                  "$ref": "#/definitions/Step"
+                },
+                "type": "array"
+              },
               "suiteId": {
                 "anyOf": [
                   {
@@ -901,6 +1094,18 @@
                   "type": "string"
                 },
                 "type": "array"
+              },
+              "timeout": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "In milliseconds: the last `test.setTimeout()` in the body or a `beforeEach`, otherwise the nearest describe or file that sets one. Null when the file sets none, so the config's timeout applies."
               },
               "title": {
                 "description": "As the runner shows it, tags included.",
@@ -945,7 +1150,7 @@
       "readOnlyHint": true,
       "title": "Get tests"
     },
-    "description": "Returns every key of the tests with the given ids, with the scan diagnostics about them, read from the test files without running them: location, describe path, state and where it is set, condition, reason, tags, annotations, comments above the test, parameters and body hash. Use it after find_tests or test_summary, for the details of up to 20 tests. Ids come from find_tests and stay the same when a test moves to another line, but change when its title, describe or file changes; ids not in the current scan are returned in notFound. Example: {\"ids\": [\"3f9a0c1d2e4b5a69\"]}.",
+    "description": "Returns every key of the tests with the given ids, with the scan diagnostics about them, read from the test files without running them: location, describe path, state and where it is set, condition, reason, tags, annotations, comments above the test, parameters, hooks around it, timeout and retries, fixtures, expect() counts, steps and body hash. Use it after find_tests or test_summary, for the details of up to 20 tests. Ids come from find_tests and stay the same when a test moves to another line, but change when its title, describe or file changes; ids not in the current scan are returned in notFound. Example: {\"ids\": [\"3f9a0c1d2e4b5a69\"]}.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "properties": {
@@ -1147,7 +1352,9 @@
                 "no-files-matched",
                 "unsupported-file",
                 "approximate-framework-version",
-                "test-in-function"
+                "test-in-function",
+                "empty-title",
+                "bench-outside-benchmark-file"
               ],
               "type": "string"
             },
@@ -1177,6 +1384,46 @@
               "type": "string"
             }
           ]
+        },
+        "HookCounts": {
+          "description": "How many hooks of each kind are registered, including by helper functions called there.",
+          "properties": {
+            "afterAll": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "afterEach": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "aroundAll": {
+              "description": "Vitest only.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "aroundEach": {
+              "description": "Vitest only.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "beforeAll": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "beforeEach": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "beforeAll",
+            "beforeEach",
+            "afterEach",
+            "afterAll",
+            "aroundEach",
+            "aroundAll"
+          ],
+          "type": "object"
         },
         "MetaValue": {
           "anyOf": [
@@ -1221,6 +1468,38 @@
             }
           ],
           "description": "Where a test's state is set: on the test, on a describe around it, or at file level. Other values may be added in later releases."
+        },
+        "Step": {
+          "properties": {
+            "depth": {
+              "description": "0 for a step directly in the test, 1 for a step inside it, and so on.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "hasDynamicTitle": {
+              "type": "boolean"
+            },
+            "isSkipped": {
+              "description": "Declared with `test.step.skip()`.",
+              "type": "boolean"
+            },
+            "lineStart": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "title": {
+              "description": "The title, or its source text when it can't be worked out.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "title",
+            "hasDynamicTitle",
+            "lineStart",
+            "depth",
+            "isSkipped"
+          ],
+          "type": "object"
         },
         "TestRecord": {
           "description": "A test, with the effective values the runner applies, including those inherited from its describes.",
@@ -1290,8 +1569,36 @@
               ],
               "description": "Where a helper imported from another file writes the test; the record's location is then the call that registers it. Null for code written in the scanned file."
             },
+            "expectCount": {
+              "description": "Calls of `expect()`, `expect.soft()` and `expect.poll()` written in the body, each counted once.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "expectedAssertions": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Vitest `expect.assertions(n)` in the body."
+            },
+            "expectsAssertions": {
+              "description": "Vitest `expect.hasAssertions()` in the body.",
+              "type": "boolean"
+            },
             "fileName": {
               "type": "string"
+            },
+            "fixtures": {
+              "description": "Names the test function takes from its context, then those of the `beforeEach`, `afterEach` and `aroundEach` hooks around it, once each. Vitest's own context keys, such as `expect` and `task`, are left out.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
             },
             "fullName": {
               "description": "`suitePath` and `title` joined with \" > \".",
@@ -1305,12 +1612,24 @@
               "description": "The title could not be resolved to a fixed string, so `title` holds its source text.",
               "type": "boolean"
             },
+            "hasEmptyBody": {
+              "description": "The test function has no statements, comments aside.",
+              "type": "boolean"
+            },
+            "hooks": {
+              "$ref": "#/definitions/HookCounts",
+              "description": "Every hook that runs around the test: those of the file and of each describe around it."
+            },
             "id": {
               "description": "Derived from the file path, the describe titles, the title and its position among tests with the same title.",
               "pattern": "^[0-9a-f]{16}$",
               "type": "string"
             },
             "isActive": {
+              "type": "boolean"
+            },
+            "isBenchmark": {
+              "description": "Vitest 5 benchmark: in a benchmark file, or using the `bench` fixture. Plain `vitest` doesn't run it.",
               "type": "boolean"
             },
             "isConditional": {
@@ -1355,6 +1674,10 @@
               "type": "boolean"
             },
             "isSkipped": {
+              "type": "boolean"
+            },
+            "isSlow": {
+              "description": "Playwright `test.slow()` applies: the runner triples the timeout.",
               "type": "boolean"
             },
             "isTodo": {
@@ -1403,6 +1726,56 @@
               "description": "Path from the project root, with `/` separators.",
               "type": "string"
             },
+            "repeats": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Vitest only: how many times the runner runs the test again after the first run."
+            },
+            "retries": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "How many times the runner retries the test when it fails; null when the file sets none."
+            },
+            "retryCondition": {
+              "description": "Vitest only: source text of the `retry` object's `condition`, a RegExp or a function.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "retryDelay": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Vitest only: milliseconds between retries, from the `retry` object (4.1)."
+            },
+            "slowCondition": {
+              "description": "Source text of the condition of the `test.slow()` that applies; null when unconditional or not slow.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "state": {
               "$ref": "#/definitions/TestState"
             },
@@ -1429,6 +1802,13 @@
               ],
               "description": "null for active tests."
             },
+            "steps": {
+              "description": "Playwright `test.step()` and `test.step.skip()` calls in the body, in source order.",
+              "items": {
+                "$ref": "#/definitions/Step"
+              },
+              "type": "array"
+            },
             "suiteId": {
               "anyOf": [
                 {
@@ -1454,6 +1834,18 @@
                 "type": "string"
               },
               "type": "array"
+            },
+            "timeout": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "In milliseconds: the last `test.setTimeout()` in the body or a `beforeEach`, otherwise the nearest describe or file that sets one. Null when the file sets none, so the config's timeout applies."
             },
             "title": {
               "description": "As the runner shows it, tags included.",
@@ -1502,6 +1894,21 @@
             "comments",
             "locks",
             "meta",
+            "hooks",
+            "timeout",
+            "isSlow",
+            "slowCondition",
+            "retries",
+            "retryDelay",
+            "retryCondition",
+            "repeats",
+            "fixtures",
+            "expectCount",
+            "expectedAssertions",
+            "expectsAssertions",
+            "hasEmptyBody",
+            "steps",
+            "isBenchmark",
             "isParameterized",
             "caseCount",
             "isInLoop",
@@ -1645,7 +2052,9 @@
               "no-files-matched",
               "unsupported-file",
               "approximate-framework-version",
-              "test-in-function"
+              "test-in-function",
+              "empty-title",
+              "bench-outside-benchmark-file"
             ],
             "type": "string"
           },
@@ -1820,7 +2229,9 @@
                 "no-files-matched",
                 "unsupported-file",
                 "approximate-framework-version",
-                "test-in-function"
+                "test-in-function",
+                "empty-title",
+                "bench-outside-benchmark-file"
               ],
               "type": "string"
             },
