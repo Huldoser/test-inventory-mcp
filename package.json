@@ -1,6 +1,6 @@
 {
   "name": "test-inventory-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MCP server for test-inventory: AI agents read a project's tests from source code, without running them.",
   "mcpName": "io.github.Huldoser/test-inventory",
   "keywords": [
