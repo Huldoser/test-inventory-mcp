@@ -1150,7 +1150,7 @@
       "readOnlyHint": true,
       "title": "Get tests"
     },
-    "description": "Returns every key of the tests with the given ids, with the scan diagnostics about them, read from the test files without running them: location, describe path, state and where it is set, condition, reason, tags, annotations, comments above the test, parameters and body hash. Use it after find_tests or test_summary, for the details of up to 20 tests. Ids come from find_tests and stay the same when a test moves to another line, but change when its title, describe or file changes; ids not in the current scan are returned in notFound. Example: {\"ids\": [\"3f9a0c1d2e4b5a69\"]}.",
+    "description": "Returns every key of the tests with the given ids, with the scan diagnostics about them, read from the test files without running them: location, describe path, state and where it is set, condition, reason, tags, annotations, comments above the test, parameters, hooks around it, timeout and retries, fixtures, expect() counts, steps and body hash. Use it after find_tests or test_summary, for the details of up to 20 tests. Ids come from find_tests and stay the same when a test moves to another line, but change when its title, describe or file changes; ids not in the current scan are returned in notFound. Example: {\"ids\": [\"3f9a0c1d2e4b5a69\"]}.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "properties": {
