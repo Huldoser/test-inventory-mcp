@@ -8,6 +8,7 @@ export interface ServerConfig {
   root: string;
   /** Used when a tool call gives none; null when the start command named none. */
   framework: Framework | null;
+  /** Used when a tool call gives none; without them, the configs choose the test files. */
   patterns: string[];
 }
 
@@ -19,9 +20,8 @@ export interface ScanArguments {
 }
 
 const MISSING =
-  'This server was started without test files to scan, so pass `framework` ("playwright" or "vitest") and ' +
-  '`patterns`, the globs of the test files from the project root, such as ["tests/**/*.spec.ts"]. The test ' +
-  "runner's config file has them: testDir and testMatch in playwright.config, test.include in vitest.config.";
+  'This server was started without a test runner, so pass `framework`: "playwright" or "vitest". Without ' +
+  '`patterns`, the test files are those the configs in `directory` and the folders below it run.';
 
 /** A pattern from a tool call stays inside the folder it is scanned from: no absolute path and no `..`. */
 function checkPattern(pattern: string): void {
@@ -54,9 +54,9 @@ async function directoryIn(root: string, directory: string): Promise<string> {
 /** Scans what the arguments name, falling back to what the server was started with. */
 export async function scanProject(config: ServerConfig, args: ScanArguments): Promise<Inventory> {
   const framework = args.framework ?? config.framework;
-  const patterns = args.patterns ?? config.patterns;
-  if (framework === null || patterns.length === 0) throw new Error(MISSING);
+  if (framework === null) throw new Error(MISSING);
   args.patterns?.forEach(checkPattern);
   const root = args.directory === undefined ? config.root : await directoryIn(config.root, args.directory);
+  const patterns = args.patterns ?? (config.patterns.length > 0 ? config.patterns : undefined);
   return scan({ root, patterns, framework });
 }

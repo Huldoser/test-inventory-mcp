@@ -7,7 +7,7 @@
       "readOnlyHint": true,
       "title": "Test summary"
     },
-    "description": "Counts a project's tests by state (active, skip, fixme, todo, expectedToFail, notLoaded) and by tag and annotation, from the test files, without running them. Use it first, for questions such as how many tests are skipped, or which files or tags have the most skipped tests; use find_tests to list the tests themselves. states, tags and grep count only the tests they match. groupBy \"file\" or \"tag\" adds the counts of each file or tag, sorted by name and paged with limit and cursor; a test with no tag is in no tag group. Example: {\"states\": [\"skip\", \"fixme\"], \"groupBy\": \"file\"}.",
+    "description": "Counts a project's tests by state (active, skip, fixme, todo, expectedToFail, notLoaded) and by tag and annotation, from the test files, without running them. Use it first, for questions such as how many tests are skipped, or which files or tags have the most skipped tests; use find_tests to list the tests themselves. states, tags and grep count only the tests they match. groupBy \"file\", \"tag\" or \"project\" adds the counts of each, sorted by name and paged with limit and cursor; a test with no tag is in no tag group, and one whose projects the scan cannot tell in no project group. configs lists the config files read and their projects. Example: {\"states\": [\"skip\", \"fixme\"], \"groupBy\": \"file\"}.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "properties": {
@@ -35,10 +35,11 @@
           "type": "string"
         },
         "groupBy": {
-          "description": "Adds the counts of each file or each tag.",
+          "description": "Adds the counts of each file, tag or project.",
           "enum": [
             "file",
-            "tag"
+            "tag",
+            "project"
           ],
           "type": "string"
         },
@@ -50,7 +51,7 @@
           "type": "integer"
         },
         "patterns": {
-          "description": "Globs of the test files, relative to `directory`, such as [\"tests/**/*.spec.ts\"]. Default: the ones the server was started with.",
+          "description": "Globs of the test files, relative to `directory`, such as [\"tests/**/*.spec.ts\"]. Default: the ones the server was started with, or without them the files the configs in `directory` and below it run.",
           "items": {
             "minLength": 1,
             "type": "string"
@@ -91,6 +92,42 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
       "definitions": {
+        "ConfigRecord": {
+          "description": "A Playwright or Vitest config that scanned files use: the nearest one in a file's folder or a folder above it, up to the root, as the runner started in that folder would. Read as code, never run.",
+          "properties": {
+            "extends": {
+              "description": "Files the config takes settings from through imports, such as a shared base config, in the order read.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "projects": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/definitions/ProjectRecord"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The projects the config runs tests in: Playwright's `projects`, or one for a config without them; Vitest's, with each browser instance as one. Null when the scan can't work them out."
+            },
+            "relativeFilePath": {
+              "description": "Path from the project root, with `/` separators.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "relativeFilePath",
+            "extends",
+            "projects"
+          ],
+          "type": "object"
+        },
         "Framework": {
           "anyOf": [
             {
@@ -104,6 +141,31 @@
               "type": "string"
             }
           ]
+        },
+        "ProjectRecord": {
+          "properties": {
+            "dependencies": {
+              "description": "Playwright's projects that run before this one; `[]` for Vitest.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "name": {
+              "description": "As the runner names it: `''` for a project without a name.",
+              "type": "string"
+            },
+            "testDir": {
+              "description": "The folder the project's test files are found in, from the project root: Playwright's `testDir`, Vitest's `dir`.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "testDir",
+            "dependencies"
+          ],
+          "type": "object"
         },
         "Summary": {
           "description": "Counts over the whole scan. Each test count uses the same definition as the matching test key.",
@@ -234,6 +296,13 @@
         }
       },
       "properties": {
+        "configs": {
+          "description": "The config files the scanned test files use, with their projects; [] when none was found.",
+          "items": {
+            "$ref": "#/definitions/ConfigRecord"
+          },
+          "type": "array"
+        },
         "framework": {
           "$ref": "#/definitions/Framework"
         },
@@ -353,6 +422,7 @@
         "framework",
         "frameworkVersion",
         "summary",
+        "configs",
         "groups",
         "total",
         "nextCursor",
@@ -371,7 +441,7 @@
       "readOnlyHint": true,
       "title": "Find tests"
     },
-    "description": "Lists a project's tests that match filters, read from the test files without running them: each with its id, full name, file and line, state, skip reason and condition, and tags by default. Use it for questions such as which tests are skipped and why, which tests carry @smoke, or where a .only was left in; use test_summary for counts and get_tests for every key of a few ids. Filters combine with AND; a list matches any of its values. fields picks other keys of the test records (id is always there). Answers are paged: follow nextCursor, or narrow the filters. Example: {\"states\": [\"skip\"], \"withoutReason\": true}.",
+    "description": "Lists a project's tests that match filters, read from the test files without running them: each with its id, full name, file and line, state, skip reason and condition, and tags by default. Use it for questions such as which tests are skipped and why, which tests carry @smoke, or where a .only was left in; use test_summary for counts and get_tests for every key of a few ids. projects keeps the tests one of the named projects runs, after each project's grep, leaving out tests whose projects the scan cannot tell. Filters combine with AND; a list matches any of its values. fields picks other keys of the test records (id is always there). Answers are paged: follow nextCursor, or narrow the filters. Example: {\"states\": [\"skip\"], \"withoutReason\": true}.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "properties": {
@@ -434,6 +504,12 @@
               "retryDelay",
               "retryCondition",
               "repeats",
+              "timeoutSource",
+              "retriesSource",
+              "repeatsSource",
+              "timeoutConfigText",
+              "retriesConfigText",
+              "repeatsConfigText",
               "fixtures",
               "expectCount",
               "expectedAssertions",
@@ -445,7 +521,8 @@
               "caseCount",
               "isInLoop",
               "isInCondition",
-              "isInFunction"
+              "isInFunction",
+              "projects"
             ],
             "type": "string"
           },
@@ -477,9 +554,17 @@
           "type": "boolean"
         },
         "patterns": {
-          "description": "Globs of the test files, relative to `directory`, such as [\"tests/**/*.spec.ts\"]. Default: the ones the server was started with.",
+          "description": "Globs of the test files, relative to `directory`, such as [\"tests/**/*.spec.ts\"]. Default: the ones the server was started with, or without them the files the configs in `directory` and below it run.",
           "items": {
             "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "projects": {
+          "description": "Keeps tests that one of these projects runs, named as in the configs test_summary lists.",
+          "items": {
             "type": "string"
           },
           "minItems": 1,
@@ -650,13 +735,14 @@
             }
           ]
         },
-        "StateSource": {
+        "SettingSource": {
           "anyOf": [
             {
               "enum": [
                 "test",
                 "suite",
-                "file"
+                "file",
+                "config"
               ],
               "type": "string"
             },
@@ -664,7 +750,24 @@
               "type": "string"
             }
           ],
-          "description": "Where a test's state is set: on the test, on a describe around it, or at file level. Other values may be added in later releases."
+          "description": "Where a test's run setting comes from: the test, a describe around it, the file, or the config its file uses. Other values may be added in later releases."
+        },
+        "StateSource": {
+          "anyOf": [
+            {
+              "enum": [
+                "test",
+                "suite",
+                "file",
+                "config"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Where a test's state is set: on the test, on a describe around it, at file level, or by a Vitest tag the config defines. Other values may be added in later releases."
         },
         "Step": {
           "properties": {
@@ -976,6 +1079,20 @@
                 ],
                 "description": "Merged from the describes and the test. Vitest only; literal values only."
               },
+              "projects": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": "string"
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Names of the projects that run the test, of the config its file uses, after each project's files and Playwright's `grep` and `grepInvert`. `[]` when no project runs it; null when there is no config, or the scan can't tell."
+              },
               "reason": {
                 "type": [
                   "string",
@@ -996,7 +1113,25 @@
                     "type": "null"
                   }
                 ],
-                "description": "Vitest only: how many times the runner runs the test again after the first run."
+                "description": "How many times the runner runs the test again after the first run: Vitest's `repeats`, or Playwright's `repeatEach` from the config less one."
+              },
+              "repeatsConfigText": {
+                "description": "The config's source text for `repeats`, Playwright's `repeatEach`, read as `timeoutConfigText` is.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "repeatsSource": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/SettingSource"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Where `repeats` comes from, read as `timeoutSource` is."
               },
               "retries": {
                 "anyOf": [
@@ -1009,6 +1144,24 @@
                   }
                 ],
                 "description": "How many times the runner retries the test when it fails; null when the file sets none."
+              },
+              "retriesConfigText": {
+                "description": "The config's source text for `retries`, read as `timeoutConfigText` is.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "retriesSource": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/SettingSource"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Where `retries`, `retryDelay` and `retryCondition` come from, read as `timeoutSource` is."
               },
               "retryCondition": {
                 "description": "Vitest only: source text of the `retry` object's `condition`, a RegExp or a function.",
@@ -1105,7 +1258,25 @@
                     "type": "null"
                   }
                 ],
-                "description": "In milliseconds: the last `test.setTimeout()` in the body or a `beforeEach`, otherwise the nearest describe or file that sets one. Null when the file sets none, so the config's timeout applies."
+                "description": "In milliseconds: the last `test.setTimeout()` in the body or a `beforeEach`, otherwise the nearest describe or file that sets one, otherwise the config. Null when none sets it, so the runner's default applies."
+              },
+              "timeoutConfigText": {
+                "description": "The config's source text for `timeout` when the config sets it under a condition, as in `process.env.CI ? 60_000 : 30_000`, shortened when long; null otherwise.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "timeoutSource": {
+                "anyOf": [
+                  {
+                    "$ref": "#/definitions/SettingSource"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Where `timeout` comes from; null when nothing sets it. A null `timeout` from the config means the config sets it, but its projects set different values or the value depends on a condition, as in `process.env.CI ? 2 : 0`."
               },
               "title": {
                 "description": "As the runner shows it, tags included.",
@@ -1150,7 +1321,7 @@
       "readOnlyHint": true,
       "title": "Get tests"
     },
-    "description": "Returns every key of the tests with the given ids, with the scan diagnostics about them, read from the test files without running them: location, describe path, state and where it is set, condition, reason, tags, annotations, comments above the test, parameters, hooks around it, timeout and retries, fixtures, expect() counts, steps and body hash. Use it after find_tests or test_summary, for the details of up to 20 tests. Ids come from find_tests and stay the same when a test moves to another line, but change when its title, describe or file changes; ids not in the current scan are returned in notFound. Example: {\"ids\": [\"3f9a0c1d2e4b5a69\"]}.",
+    "description": "Returns every key of the tests with the given ids, with the scan diagnostics about them, read from the test files without running them: location, describe path, state and where it is set, condition, reason, tags, annotations, comments above the test, parameters, the projects that run it, hooks around it, timeout and retries with where each is set (the test, a describe, the file or the config), fixtures, expect() counts, steps and body hash. Use it after find_tests or test_summary, for the details of up to 20 tests. Ids come from find_tests and stay the same when a test moves to another line, but change when its title, describe or file changes; ids not in the current scan are returned in notFound. Example: {\"ids\": [\"3f9a0c1d2e4b5a69\"]}.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "properties": {
@@ -1178,7 +1349,7 @@
           "type": "array"
         },
         "patterns": {
-          "description": "Globs of the test files, relative to `directory`, such as [\"tests/**/*.spec.ts\"]. Default: the ones the server was started with.",
+          "description": "Globs of the test files, relative to `directory`, such as [\"tests/**/*.spec.ts\"]. Default: the ones the server was started with, or without them the files the configs in `directory` and below it run.",
           "items": {
             "minLength": 1,
             "type": "string"
@@ -1340,6 +1511,7 @@
                 "removed-api",
                 "only-in-skipped-describe",
                 "config-may-change-state",
+                "undefined-tag",
                 "symlink-ignored",
                 "invalid-import",
                 "globals-not-enabled",
@@ -1354,7 +1526,10 @@
                 "approximate-framework-version",
                 "test-in-function",
                 "empty-title",
-                "bench-outside-benchmark-file"
+                "bench-outside-benchmark-file",
+                "config-value-unknown",
+                "file-not-run",
+                "forbidden-only"
               ],
               "type": "string"
             },
@@ -1453,13 +1628,14 @@
             }
           ]
         },
-        "StateSource": {
+        "SettingSource": {
           "anyOf": [
             {
               "enum": [
                 "test",
                 "suite",
-                "file"
+                "file",
+                "config"
               ],
               "type": "string"
             },
@@ -1467,7 +1643,24 @@
               "type": "string"
             }
           ],
-          "description": "Where a test's state is set: on the test, on a describe around it, or at file level. Other values may be added in later releases."
+          "description": "Where a test's run setting comes from: the test, a describe around it, the file, or the config its file uses. Other values may be added in later releases."
+        },
+        "StateSource": {
+          "anyOf": [
+            {
+              "enum": [
+                "test",
+                "suite",
+                "file",
+                "config"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Where a test's state is set: on the test, on a describe around it, at file level, or by a Vitest tag the config defines. Other values may be added in later releases."
         },
         "Step": {
           "properties": {
@@ -1716,6 +1909,20 @@
               ],
               "description": "Merged from the describes and the test. Vitest only; literal values only."
             },
+            "projects": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Names of the projects that run the test, of the config its file uses, after each project's files and Playwright's `grep` and `grepInvert`. `[]` when no project runs it; null when there is no config, or the scan can't tell."
+            },
             "reason": {
               "type": [
                 "string",
@@ -1736,7 +1943,25 @@
                   "type": "null"
                 }
               ],
-              "description": "Vitest only: how many times the runner runs the test again after the first run."
+              "description": "How many times the runner runs the test again after the first run: Vitest's `repeats`, or Playwright's `repeatEach` from the config less one."
+            },
+            "repeatsConfigText": {
+              "description": "The config's source text for `repeats`, Playwright's `repeatEach`, read as `timeoutConfigText` is.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "repeatsSource": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/SettingSource"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Where `repeats` comes from, read as `timeoutSource` is."
             },
             "retries": {
               "anyOf": [
@@ -1749,6 +1974,24 @@
                 }
               ],
               "description": "How many times the runner retries the test when it fails; null when the file sets none."
+            },
+            "retriesConfigText": {
+              "description": "The config's source text for `retries`, read as `timeoutConfigText` is.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "retriesSource": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/SettingSource"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Where `retries`, `retryDelay` and `retryCondition` come from, read as `timeoutSource` is."
             },
             "retryCondition": {
               "description": "Vitest only: source text of the `retry` object's `condition`, a RegExp or a function.",
@@ -1845,7 +2088,25 @@
                   "type": "null"
                 }
               ],
-              "description": "In milliseconds: the last `test.setTimeout()` in the body or a `beforeEach`, otherwise the nearest describe or file that sets one. Null when the file sets none, so the config's timeout applies."
+              "description": "In milliseconds: the last `test.setTimeout()` in the body or a `beforeEach`, otherwise the nearest describe or file that sets one, otherwise the config. Null when none sets it, so the runner's default applies."
+            },
+            "timeoutConfigText": {
+              "description": "The config's source text for `timeout` when the config sets it under a condition, as in `process.env.CI ? 60_000 : 30_000`, shortened when long; null otherwise.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "timeoutSource": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/SettingSource"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Where `timeout` comes from; null when nothing sets it. A null `timeout` from the config means the config sets it, but its projects set different values or the value depends on a condition, as in `process.env.CI ? 2 : 0`."
             },
             "title": {
               "description": "As the runner shows it, tags included.",
@@ -1902,6 +2163,12 @@
             "retryDelay",
             "retryCondition",
             "repeats",
+            "timeoutSource",
+            "retriesSource",
+            "repeatsSource",
+            "timeoutConfigText",
+            "retriesConfigText",
+            "repeatsConfigText",
             "fixtures",
             "expectCount",
             "expectedAssertions",
@@ -1913,7 +2180,8 @@
             "caseCount",
             "isInLoop",
             "isInCondition",
-            "isInFunction"
+            "isInFunction",
+            "projects"
           ],
           "type": "object"
         },
@@ -2010,7 +2278,7 @@
       "readOnlyHint": true,
       "title": "Scan diagnostics"
     },
-    "description": "Lists the problems test-inventory found while reading the test files: level error means tests may be missing from the other answers (a file that failed to parse, an import it could not follow), level warning means a value is missing or approximate (a title built at run time, a tag that is not a string). They are about reading the code, not test failures. Use it when another tool reports scanErrors, or to check why a test is missing or notLoaded. Answers are paged: follow nextCursor. Example: {\"levels\": [\"error\"]}.",
+    "description": "Lists the problems test-inventory found while reading the test files: level error means tests may be missing from the other answers (a file that failed to parse, an import it could not follow), or that the runner fails the file or the run (a Vitest tag the config does not define, a .only that forbidOnly fails); level warning means a value is missing or approximate (a title built at run time, a config value computed at run time, a file no config runs). They are about reading the code, not test failures. Use it when another tool reports scanErrors, or to check why a test is missing or notLoaded. Answers are paged: follow nextCursor. Example: {\"levels\": [\"error\"]}.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "properties": {
@@ -2040,6 +2308,7 @@
               "removed-api",
               "only-in-skipped-describe",
               "config-may-change-state",
+              "undefined-tag",
               "symlink-ignored",
               "invalid-import",
               "globals-not-enabled",
@@ -2054,7 +2323,10 @@
               "approximate-framework-version",
               "test-in-function",
               "empty-title",
-              "bench-outside-benchmark-file"
+              "bench-outside-benchmark-file",
+              "config-value-unknown",
+              "file-not-run",
+              "forbidden-only"
             ],
             "type": "string"
           },
@@ -2104,7 +2376,7 @@
           "type": "string"
         },
         "patterns": {
-          "description": "Globs of the test files, relative to `directory`, such as [\"tests/**/*.spec.ts\"]. Default: the ones the server was started with.",
+          "description": "Globs of the test files, relative to `directory`, such as [\"tests/**/*.spec.ts\"]. Default: the ones the server was started with, or without them the files the configs in `directory` and below it run.",
           "items": {
             "minLength": 1,
             "type": "string"
@@ -2217,6 +2489,7 @@
                 "removed-api",
                 "only-in-skipped-describe",
                 "config-may-change-state",
+                "undefined-tag",
                 "symlink-ignored",
                 "invalid-import",
                 "globals-not-enabled",
@@ -2231,7 +2504,10 @@
                 "approximate-framework-version",
                 "test-in-function",
                 "empty-title",
-                "bench-outside-benchmark-file"
+                "bench-outside-benchmark-file",
+                "config-value-unknown",
+                "file-not-run",
+                "forbidden-only"
               ],
               "type": "string"
             },

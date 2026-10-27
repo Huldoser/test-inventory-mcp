@@ -8,19 +8,20 @@ export const serverVersion: string = (
   JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version: string }
 ).version;
 
-export const HELP = `Usage: test-inventory-mcp [<glob...> --framework <playwright|vitest>] [--root <dir>]
+export const HELP = `Usage: test-inventory-mcp [--framework <playwright|vitest> [<glob...>]] [--root <dir>]
 
 An MCP server on standard input and output. It answers an AI agent's questions about the
 tests of a project from their source code, without running them.
 
-  <glob...>                    test files to scan, relative to the root; a tool call can pass others
-  --framework <name>           playwright or vitest, for the globs
+  --framework <name>           playwright or vitest; a tool call can pass the other
+  <glob...>                    test files to scan, relative to the root; without them, those the configs
+                               run; a tool call can pass others
   --root <dir>                 the project; defaults to $CLAUDE_PROJECT_DIR, then the current folder
   -h, --help                   show this help
   -v, --version                show the version
 
 Example, in an MCP client's configuration:
-  npx -y test-inventory-mcp "tests/**/*.spec.ts" --framework playwright
+  npx -y test-inventory-mcp --framework playwright
 `;
 
 /** What the command line asks for: serving with a config, or printing a text and exiting. */
@@ -53,8 +54,8 @@ export function parseCommandLine(args: string[], env: NodeJS.ProcessEnv, cwd: st
   if (framework !== null && framework !== 'playwright' && framework !== 'vitest') {
     return usageError(`--framework must be playwright or vitest; got "${framework}".`);
   }
-  if ((framework === null) !== (positionals.length === 0)) {
-    return usageError('the globs and --framework go together: give both, or neither and let tool calls pass them.');
+  if (framework === null && positionals.length > 0) {
+    return usageError('the globs need --framework, the runner they are for.');
   }
   const given = values.root ?? env.CLAUDE_PROJECT_DIR ?? cwd;
   let root: string;

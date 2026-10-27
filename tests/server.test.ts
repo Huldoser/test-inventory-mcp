@@ -118,6 +118,18 @@ describe('find_tests', () => {
     expect(only.total).toBe(0);
   });
 
+  it('keeps the tests one of the projects runs, after their grep', async () => {
+    const answer = await call<FoundTests>(connection.client, 'find_tests', { projects: ['mobile-smoke'], limit: 100 });
+    const runs = expected.tests.filter((test) => test.projects?.includes('mobile-smoke'));
+    expect(runs.length).toBeGreaterThan(0);
+    expect(runs.length).toBeLessThan(expected.tests.length);
+    expect(answer.tests.map((test) => test.id)).toEqual(runs.map((test) => test.id));
+    const desktop = await call<FoundTests>(connection.client, 'find_tests', { projects: ['chromium', 'mobile-smoke'] });
+    // A title built at run time meets mobile-smoke's grep, so the scan can't tell which projects run that test.
+    expect(expected.tests.filter((test) => test.projects === null).map((test) => test.hasDynamicTitle)).toEqual([true]);
+    expect(desktop.total).toBe(expected.tests.length - 1);
+  });
+
   it('says how big the scan was when no test matches', async () => {
     const answer = await call<FoundTests>(connection.client, 'find_tests', { grep: 'margin call' });
     expect(answer.hint).toBe('No test matches; the scan found 31 tests in 11 files.');
@@ -172,12 +184,33 @@ describe('test_summary', () => {
       framework: 'playwright',
       frameworkVersion: '1.63.0',
       summary: expected.summary,
+      configs: expected.configs,
       groups: null,
       total: null,
       nextCursor: null,
       scanErrors: 0,
       hint: null,
     });
+  });
+
+  it('counts the tests each project runs, with the configs that name the projects', async () => {
+    const answer = await call<{ configs: { projects: { name: string }[] }[]; groups: { key: string }[] }>(
+      connection.client,
+      'test_summary',
+      { states: ['active'], groupBy: 'project' },
+    );
+    expect(answer.configs.flatMap((config) => config.projects.map((project) => project.name))).toEqual([
+      'chromium',
+      'webkit',
+      'mobile-smoke',
+    ]);
+    const active = expected.tests.filter((test) => test.state === 'active');
+    expect(answer.groups.map((group) => group)).toEqual(
+      ['chromium', 'mobile-smoke', 'webkit'].map((key) => {
+        const runs = active.filter((test) => test.projects?.includes(key));
+        return expect.objectContaining({ key, testCount: runs.length, activeCount: runs.length }) as object;
+      }),
+    );
   });
 
   it('counts the matching tests of each file, sorted by path', async () => {
@@ -338,12 +371,28 @@ describe('a server started without test files', () => {
   });
   afterEach(() => connection.close());
 
-  it('asks for framework and patterns', async () => {
-    expect(await callError(connection.client, 'test_summary', { framework: 'vitest' })).toBe(
-      'This server was started without test files to scan, so pass `framework` ("playwright" or "vitest") and ' +
-        '`patterns`, the globs of the test files from the project root, such as ["tests/**/*.spec.ts"]. The test ' +
-        "runner's config file has them: testDir and testMatch in playwright.config, test.include in vitest.config.",
+  it('asks for a framework', async () => {
+    expect(await callError(connection.client, 'test_summary', { directory: 'order-service' })).toBe(
+      'This server was started without a test runner, so pass `framework`: "playwright" or "vitest". Without ' +
+        '`patterns`, the test files are those the configs in `directory` and the folders below it run.',
     );
+  });
+
+  it('scans the files the configs run when a call gives no patterns', async () => {
+    const answer = await call<{ summary: { testCount: number; fileCount: number } }>(
+      connection.client,
+      'test_summary',
+      { directory: 'order-service', framework: 'vitest' },
+    );
+    const fromConfigs = await scan({
+      root: path.join(path.dirname(tradingWeb.root), 'order-service'),
+      framework: 'vitest',
+    });
+    expect(fromConfigs.summary.testCount).toBeGreaterThan(0);
+    expect(answer.summary).toMatchObject({
+      testCount: fromConfigs.summary.testCount,
+      fileCount: fromConfigs.summary.fileCount,
+    });
   });
 
   it('scans the directory, framework and patterns a call gives', async () => {
@@ -366,7 +415,8 @@ describe('a server started without test files', () => {
 
   it('says when no file matched, in every tool', async () => {
     const args = { directory: 'order-service', framework: 'vitest', patterns: ['e2e/**/*.spec.ts'] };
-    const hint = 'No file matched the patterns, so there is nothing to report: check `patterns` and `directory`.';
+    const hint =
+      'No test file was found, so there is nothing to report: check `patterns` and `directory`; scan_diagnostics says why.';
     expect(await call(connection.client, 'test_summary', args)).toMatchObject({ hint });
     expect(await call(connection.client, 'find_tests', args)).toMatchObject({ total: 0, hint });
     expect(await call(connection.client, 'get_tests', { ...args, ids: ['dbb8916ae393be67'] })).toMatchObject({
