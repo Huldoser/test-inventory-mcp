@@ -1,5 +1,22 @@
 # test-inventory-mcp
 
+## 0.3.0
+
+### Minor Changes
+
+- [#12](https://github.com/Huldoser/test-inventory-mcp/pull/12) [`9cbd6d5`](https://github.com/Huldoser/test-inventory-mcp/commit/9cbd6d59bee4700fd2cafed922eafd012ea5093e) - The server no longer needs globs: started with `--framework` alone, or called with `framework` and no `patterns`, it
+  scans the test files the project's configs run; before, `--framework` without globs was a usage error.
+  `find_tests` takes `projects`, to keep the tests one of the named projects runs, after each project's `grep`. `test_summary` returns `configs`, the config files the scanned files use with their
+  projects, and counts the tests of each project with `groupBy: "project"`. The instructions and tool descriptions name
+  what test-inventory 0.5.0 reads from the configs.
+
+- [#12](https://github.com/Huldoser/test-inventory-mcp/pull/12) [`9cbd6d5`](https://github.com/Huldoser/test-inventory-mcp/commit/9cbd6d59bee4700fd2cafed922eafd012ea5093e) - Scans now use test-inventory 0.5.0, which reads the config each test file uses. Test records get `projects`, the
+  projects that run each test, and the run settings the config gives, with `timeoutSource`, `retriesSource` and
+  `repeatsSource` saying where each comes from and `timeoutConfigText`, `retriesConfigText` and `repeatsConfigText`
+  quoting a value the config sets under a condition, as `process.env.CI ? 2 : 0`. `find_tests` can pick these keys in
+  `fields`, and `scan_diagnostics` knows the new codes: `forbidden-only` for a `.only` the config's `forbidOnly` fails,
+  `undefined-tag` for a Vitest tag the config doesn't define, `file-not-run`, and `config-value-unknown`.
+
 ## 0.2.0
 
 ### Minor Changes
