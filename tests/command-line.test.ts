@@ -21,6 +21,12 @@ describe('parseCommandLine', () => {
     });
   });
 
+  it('serves a framework without globs, for the configs to choose the test files', () => {
+    expect(parseCommandLine(['--framework', 'playwright'], {}, tradingWeb)).toEqual({
+      config: { root: tradingWeb, framework: 'playwright', patterns: [] },
+    });
+  });
+
   it('serves without test files, for tool calls to name them', () => {
     expect(parseCommandLine([], {}, tradingWeb)).toEqual({
       config: { root: tradingWeb, framework: null, patterns: [] },
@@ -49,11 +55,9 @@ describe('parseCommandLine', () => {
     expect(parseCommandLine(['src/**/*.test.ts', '--framework', 'jest'], {}, fixtures)).toEqual(
       usage('--framework must be playwright or vitest; got "jest".'),
     );
-    const together = usage(
-      'the globs and --framework go together: give both, or neither and let tool calls pass them.',
+    expect(parseCommandLine(['src/**/*.test.ts'], {}, fixtures)).toEqual(
+      usage('the globs need --framework, the runner they are for.'),
     );
-    expect(parseCommandLine(['src/**/*.test.ts'], {}, fixtures)).toEqual(together);
-    expect(parseCommandLine(['--framework', 'vitest'], {}, fixtures)).toEqual(together);
   });
 
   it('reports a project folder that is missing or is a file', () => {
