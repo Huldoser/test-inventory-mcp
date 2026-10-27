@@ -44,18 +44,29 @@ Tool names, their inputs and their output are the server's API. Before 1.0:
 Releases are made from `main`. Changesets collect there until a maintainer releases them; nothing is published until a
 release pull request is merged.
 
-1. Branch from an up-to-date `main`, for example `release-0.2.0`.
-2. Run `GITHUB_TOKEN=$(gh auth token) npx changeset version`. It raises the version in `package.json`, writes
-   `CHANGELOG.md` and deletes the changesets it used. The token links each change to its pull request; it is set for
-   this one command and stored nowhere.
-3. Run `npm install --package-lock-only` so that `package-lock.json` has the new version too.
-4. Commit as "Release x.y.z", push, and open a pull request. Review the `CHANGELOG.md` entry and the version, and
-   squash merge it when the checks pass.
-5. The push to `main` starts the Release workflow. It builds, tests and packs the package, publishes it to npm with
+A new minor version needs the README's setup commands to pin it, as `test-inventory-mcp@0.3`, so that new installs
+get it; raise them in a pull request before releasing. `npm run release` stops while they pin another minor.
+
+1. On an up-to-date `main` with no local changes, run `npm run release`. It checks that `main` matches GitHub, that
+   changesets are waiting and that the README pins their minor, makes a `release-x.y.z` branch, runs
+   `changeset version`, updates the lockfile, commits "Release x.y.z", pushes the branch and opens the pull request,
+   with gh when it is installed and otherwise through a link it prints. `changeset version` reads a GitHub token to
+   link each change to its pull request: `GITHUB_TOKEN` when it is set, otherwise the one gh is logged in with.
+   `npm run release -- --dry-run` shows the steps first.
+2. Review the new `CHANGELOG.md` entry and the version in the pull request, and squash merge it when the checks pass.
+3. The push to `main` starts the Release workflow. It builds, tests and packs the package, publishes it to npm with
    provenance, pushes the `vx.y.z` tag and creates the GitHub release. Merging is the approval: only `main` may use
    the `npm` environment.
-6. npm lists the new version a few minutes after the run publishes it. Check with
+4. npm lists the new version a few minutes after the run publishes it. Check with
    `npm view test-inventory-mcp@x.y.z --prefer-online`; don't re-run the publish job, as npm already has the version.
+
+The same steps by hand, if the script can't be used:
+
+1. Branch from an up-to-date `main`, for example `release-0.3.0`.
+2. Run `GITHUB_TOKEN=$(gh auth token) npx changeset version`. It raises the version in `package.json`, writes
+   `CHANGELOG.md` and deletes the changesets it used. The token is set for this one command and stored nowhere.
+3. Run `npm install --package-lock-only` so that `package-lock.json` has the new version too.
+4. Commit as "Release x.y.z", push, and open a pull request.
 
 npm publishes with trusted publishing: the package's trusted publisher on npmjs.com names this repository,
 `release.yml` and the `npm` environment, and allows `npm publish`. No npm token is involved. A maintainer with

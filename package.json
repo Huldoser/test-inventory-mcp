@@ -52,6 +52,7 @@
     "format": "prettier --write . --ignore-path .gitignore --ignore-path .prettierignore --ignore-path .git/info/exclude",
     "format:check": "node scripts/format-check.ts",
     "changeset": "changeset",
+    "release": "node scripts/release.ts",
     "publint": "publint --strict"
   },
   "devDependencies": {
