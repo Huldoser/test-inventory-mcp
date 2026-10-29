@@ -59,6 +59,14 @@
           "minItems": 1,
           "type": "array"
         },
+        "related": {
+          "description": "Changed files, relative to the project root as `git diff --name-only` writes them, such as [\"pages/order-ticket.ts\"]. Keeps the tests a change to one of them can affect: those whose dependencies include it, and those that reach code the scan can't follow (hasUnfollowedDependencies).",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "type": "array"
+        },
         "states": {
           "description": "Keeps tests in one of these states.",
           "items": {
@@ -441,7 +449,7 @@
       "readOnlyHint": true,
       "title": "Find tests"
     },
-    "description": "Lists a project's tests that match filters, read from the test files without running them: each with its id, full name, file and line, state, skip reason and condition, and tags by default. Use it for questions such as which tests are skipped and why, which tests carry @smoke, or where a .only was left in; use test_summary for counts and get_tests for every key of a few ids. projects keeps the tests one of the named projects runs, after each project's grep, leaving out tests whose projects the scan cannot tell. Filters combine with AND; a list matches any of its values. fields picks other keys of the test records (id is always there). Answers are paged: follow nextCursor, or narrow the filters. Example: {\"states\": [\"skip\"], \"withoutReason\": true}.",
+    "description": "Lists a project's tests that match filters, read from the test files without running them: each with its id, full name, file and line, state, skip reason and condition, and tags by default. Use it for questions such as which tests are skipped and why, which tests carry @smoke, where a .only was left in, or which tests a change can affect (related, the changed files); use test_summary for counts and get_tests for every key of a few ids. projects keeps the tests one of the named projects runs, after each project's grep, leaving out tests whose projects the scan cannot tell. Filters combine with AND; a list matches any of its values. fields picks other keys of the test records (id is always there). Answers are paged: follow nextCursor, or narrow the filters. Example: {\"states\": [\"skip\"], \"withoutReason\": true}.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "properties": {
@@ -461,6 +469,9 @@
             "enum": [
               "id",
               "bodyHash",
+              "dependencyHash",
+              "dependencies",
+              "hasUnfollowedDependencies",
               "suiteId",
               "suitePath",
               "relativeFilePath",
@@ -568,6 +579,14 @@
             "type": "string"
           },
           "minItems": 1,
+          "type": "array"
+        },
+        "related": {
+          "description": "Changed files, relative to the project root as `git diff --name-only` writes them, such as [\"pages/order-ticket.ts\"]. Keeps the tests a change to one of them can affect: those whose dependencies include it, and those that reach code the scan can't follow (hasUnfollowedDependencies).",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
           "type": "array"
         },
         "states": {
@@ -932,6 +951,18 @@
                 ],
                 "description": "Where a helper imported from another file writes the test; the record's location is then the call that registers it. Null for code written in the scanned file."
               },
+              "dependencies": {
+                "description": "The files that went into `dependencyHash`, the test's own included, sorted, with `/` separators.",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "dependencyHash": {
+                "description": "Hash of everything the test runs in the project: its call, the hooks, options and code of the file and of every describe around it, and the functions, classes, constants and modules these use, followed through imports. Ignores whitespace and comments. Installed packages are not in it.",
+                "pattern": "^[0-9a-f]{16}$",
+                "type": "string"
+              },
               "expectCount": {
                 "description": "Calls of `expect()`, `expect.soft()` and `expect.poll()` written in the body, each counted once.",
                 "minimum": 0,
@@ -977,6 +1008,10 @@
               },
               "hasEmptyBody": {
                 "description": "The test function has no statements, comments aside.",
+                "type": "boolean"
+              },
+              "hasUnfollowedDependencies": {
+                "description": "Something the test reaches couldn't be followed, so a change there doesn't change `dependencyHash`.",
                 "type": "boolean"
               },
               "hooks": {
@@ -1321,7 +1356,7 @@
       "readOnlyHint": true,
       "title": "Get tests"
     },
-    "description": "Returns every key of the tests with the given ids, with the scan diagnostics about them, read from the test files without running them: location, describe path, state and where it is set, condition, reason, tags, annotations, comments above the test, parameters, the projects that run it, hooks around it, timeout and retries with where each is set (the test, a describe, the file or the config), fixtures, expect() counts, steps and body hash. Use it after find_tests or test_summary, for the details of up to 20 tests. Ids come from find_tests and stay the same when a test moves to another line, but change when its title, describe or file changes; ids not in the current scan are returned in notFound. Example: {\"ids\": [\"3f9a0c1d2e4b5a69\"]}.",
+    "description": "Returns every key of the tests with the given ids, with the scan diagnostics about them, read from the test files without running them: location, describe path, state and where it is set, condition, reason, tags, annotations, comments above the test, parameters, the projects that run it, hooks around it, timeout and retries with where each is set (the test, a describe, the file or the config), fixtures, expect() counts, steps, body hash, and the files the test runs with dependencyHash. Use it after find_tests or test_summary, for the details of up to 20 tests. Ids come from find_tests and stay the same when a test moves to another line, but change when its title, describe or file changes; ids not in the current scan are returned in notFound. Example: {\"ids\": [\"3f9a0c1d2e4b5a69\"]}. An answer that would be too long returns the first tests and the other ids in remaining.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "properties": {
@@ -1529,7 +1564,8 @@
                 "bench-outside-benchmark-file",
                 "config-value-unknown",
                 "file-not-run",
-                "forbidden-only"
+                "forbidden-only",
+                "dependency-not-followed"
               ],
               "type": "string"
             },
@@ -1762,6 +1798,18 @@
               ],
               "description": "Where a helper imported from another file writes the test; the record's location is then the call that registers it. Null for code written in the scanned file."
             },
+            "dependencies": {
+              "description": "The files that went into `dependencyHash`, the test's own included, sorted, with `/` separators.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "dependencyHash": {
+              "description": "Hash of everything the test runs in the project: its call, the hooks, options and code of the file and of every describe around it, and the functions, classes, constants and modules these use, followed through imports. Ignores whitespace and comments. Installed packages are not in it.",
+              "pattern": "^[0-9a-f]{16}$",
+              "type": "string"
+            },
             "expectCount": {
               "description": "Calls of `expect()`, `expect.soft()` and `expect.poll()` written in the body, each counted once.",
               "minimum": 0,
@@ -1807,6 +1855,10 @@
             },
             "hasEmptyBody": {
               "description": "The test function has no statements, comments aside.",
+              "type": "boolean"
+            },
+            "hasUnfollowedDependencies": {
+              "description": "Something the test reaches couldn't be followed, so a change there doesn't change `dependencyHash`.",
               "type": "boolean"
             },
             "hooks": {
@@ -2120,6 +2172,9 @@
           "required": [
             "id",
             "bodyHash",
+            "dependencyHash",
+            "dependencies",
+            "hasUnfollowedDependencies",
             "suiteId",
             "suitePath",
             "relativeFilePath",
@@ -2244,6 +2299,13 @@
           },
           "type": "array"
         },
+        "remaining": {
+          "description": "Ids found but left out to keep the answer short; pass them again.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "scanErrors": {
           "description": "Problems of level error in the scan, which may leave tests out of the answer.",
           "minimum": 0,
@@ -2263,6 +2325,7 @@
         "tests",
         "diagnostics",
         "notFound",
+        "remaining",
         "scanErrors",
         "hint"
       ],
@@ -2326,7 +2389,8 @@
               "bench-outside-benchmark-file",
               "config-value-unknown",
               "file-not-run",
-              "forbidden-only"
+              "forbidden-only",
+              "dependency-not-followed"
             ],
             "type": "string"
           },
@@ -2507,7 +2571,8 @@
                 "bench-outside-benchmark-file",
                 "config-value-unknown",
                 "file-not-run",
-                "forbidden-only"
+                "forbidden-only",
+                "dependency-not-followed"
               ],
               "type": "string"
             },

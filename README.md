@@ -1,7 +1,7 @@
 # test-inventory-mcp
 
 An MCP server for [test-inventory](https://github.com/Huldoser/test-inventory): AI agents ask which tests a project
-has, which are skipped and why, without running them.
+has, which are skipped and why, and which tests a change can affect, without running them.
 
 It reads Playwright and Vitest test files with test-inventory and answers from their source code. Nothing runs,
 nothing is written, and nothing leaves your machine.
@@ -15,7 +15,7 @@ it pick the files instead, as on test-inventory's command line.
 **Claude Code**, in the project folder. `--scope project` writes `.mcp.json`, for everyone who works on the project:
 
 ```sh
-claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.3 --framework playwright
+claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.4 --framework playwright
 ```
 
 **Cursor**, in `.cursor/mcp.json`:
@@ -25,7 +25,7 @@ claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.3 -
   "mcpServers": {
     "test-inventory": {
       "command": "npx",
-      "args": ["-y", "test-inventory-mcp@0.3", "--framework", "playwright"]
+      "args": ["-y", "test-inventory-mcp@0.4", "--framework", "playwright"]
     }
   }
 }
@@ -39,7 +39,7 @@ claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.3 -
     "test-inventory": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "test-inventory-mcp@0.3", "--framework", "playwright"]
+      "args": ["-y", "test-inventory-mcp@0.4", "--framework", "playwright"]
     }
   }
 }
@@ -69,9 +69,15 @@ test-inventory-mcp [--framework <playwright|vitest> [<glob...>]] [--root <dir>]
 | Tool               | Answers                                                                                                                            |
 | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `test_summary`     | Counts by state, tag and annotation, and the configs with their projects; with `groupBy`, the counts of each file, tag or project. |
-| `find_tests`       | The tests that match `states`, `tags`, `grep`, `projects`, `only` or `withoutReason`, with the `fields` you pick.                  |
+| `find_tests`       | The tests that match `states`, `tags`, `grep`, `related`, `projects`, `only` or `withoutReason`, with the `fields` you pick.       |
 | `get_tests`        | Every key of up to 20 tests by id, with the scan's diagnostics about them.                                                         |
 | `scan_diagnostics` | The problems the scan found, such as a file that failed to parse, by level, code or path.                                          |
+
+`related` takes the files a change touches, from the project root as `git diff --name-only` writes them, and keeps
+the tests whose `dependencies` include one of them, and those that reach code the scan can't follow, as
+test-inventory's [`--related`](https://huldoser.github.io/test-inventory/guide/cli#tests-a-change-can-affect) does.
+`dependencies` can list hundreds of files, so it isn't among the default `fields`, and `get_tests` returns as many
+tests as fit in one answer, with the other ids in `remaining`.
 
 Every tool also takes `directory`, a folder inside the project to scan, and `framework` and `patterns` to override
 the command line. Records have the keys of test-inventory's
@@ -93,7 +99,7 @@ as content of that project, not as instructions. To report a vulnerability, see 
 ## Versioning
 
 Tool names, their arguments and their answers are the server's API. Before 1.0, a change that breaks them raises the
-minor version, so `test-inventory-mcp@0.3` in the setup above gets fixes only.
+minor version, so `test-inventory-mcp@0.4` in the setup above gets fixes only.
 
 ## License
 
