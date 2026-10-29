@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { parseCommandLine } from '../src/command-line.ts';
+import { relatedIn } from '../src/project.ts';
 import { call, callError, connect, type Connection } from './helpers.ts';
 
 // A desk project next to a folder outside it, so a link and a path can try to reach out. The temporary folder is used
@@ -103,5 +104,17 @@ describe('what a tool call scans', () => {
   it('uses the patterns of the start command for another framework a call names', async () => {
     const answer = await call(connection.client, 'test_summary', { framework: 'vitest' });
     expect(answer).toMatchObject({ framework: 'vitest', summary: { fileCount: 3 } });
+  });
+});
+
+describe('relatedIn', () => {
+  it('names changed files from the folder a call scans, and leaves out those outside it', () => {
+    expect(relatedIn(undefined, ['pages/order-ticket.ts', '.\\fixtures\\index.ts'])).toEqual([
+      'pages/order-ticket.ts',
+      'fixtures/index.ts',
+    ]);
+    expect(relatedIn('apps/web', ['apps/web/pages/order-ticket.ts', 'apps/api/routes/orders.ts'])).toEqual([
+      'pages/order-ticket.ts',
+    ]);
   });
 });

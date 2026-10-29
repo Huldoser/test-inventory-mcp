@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { scan, type Diagnostic, type TestRecord } from 'test-inventory';
+import { filterInventory, scan, type Diagnostic, type TestRecord } from 'test-inventory';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { INSTRUCTIONS } from '../src/server.ts';
 import { call, callError, connect, tradingWeb, type Connection, type Era } from './helpers.ts';
@@ -128,6 +128,24 @@ describe('find_tests', () => {
     // A title built at run time meets mobile-smoke's grep, so the scan can't tell which projects run that test.
     expect(expected.tests.filter((test) => test.projects === null).map((test) => test.hasDynamicTitle)).toEqual([true]);
     expect(desktop.total).toBe(expected.tests.length - 1);
+  });
+
+  it('keeps the tests a change to a file can affect, with paths from the project root', async () => {
+    const related = ['pages/orders-blotter.ts'];
+    const answer = await call<FoundTests>(connection.client, 'find_tests', { related, fields: ['fullName'] });
+    expect(answer.tests.map((test) => test.fullName)).toEqual(
+      filterInventory(expected, { related }).tests.map((test) => test.fullName),
+    );
+    expect(answer.total).toBeGreaterThan(0);
+    const summary = await call<{ summary: { testCount: number } }>(connection.client, 'test_summary', { related });
+    expect(summary.summary.testCount).toBe(answer.total);
+  });
+
+  it('refuses a changed file outside the project', async () => {
+    expect(await callError(connection.client, 'find_tests', { related: ['../shared/fees.ts'] })).toBe(
+      'The file "../shared/fees.ts" is outside the project. Changed files are relative to the project root, as ' +
+        '`git diff --name-only` writes them, and cannot start with "/" or a drive, or contain "..".',
+    );
   });
 
   it('says how big the scan was when no test matches', async () => {
@@ -307,6 +325,21 @@ describe('get_tests', () => {
   it('says nothing more when every id is found', async () => {
     const answer = await call(connection.client, 'get_tests', { ids: ['dbb8916ae393be67'] });
     expect(answer).toMatchObject({ diagnostics: [], notFound: [], hint: null });
+  });
+
+  it('returns as many tests as fit, and the other ids in remaining, as dependencies can be long', async () => {
+    const ids = expected.tests.slice(0, 20).map((test) => test.id);
+    const answer = await call<{ tests: TestRecord[]; remaining: string[]; hint: string }>(
+      connection.client,
+      'get_tests',
+      {
+        ids,
+      },
+    );
+    expect(JSON.stringify(answer).length).toBeLessThanOrEqual(30_000);
+    expect(answer.remaining.length).toBeGreaterThan(0);
+    expect([...answer.tests.map((test) => test.id), ...answer.remaining]).toEqual(ids);
+    expect(answer.hint).toBe('Ids in remaining were left out to keep the answer short; pass them again.');
   });
 
   it('takes at most 20 ids', async () => {
