@@ -1,5 +1,14 @@
 # test-inventory-mcp
 
+## 0.4.1
+
+### Patch Changes
+
+- [#17](https://github.com/Huldoser/test-inventory-mcp/pull/17) [`f5a02f9`](https://github.com/Huldoser/test-inventory-mcp/commit/f5a02f925d9e923391cff3b002d0b3a3e8976c9b) - Requires test-inventory 0.6.1, with its 21 fixes: test states from Vitest tags, `skipIf`/`runIf` and `retry` options,
+  barrel files and path aliases in `dependencies` and `related`, project names and `default: false` projects from the
+  configs, and files nested too deeply for the parser, which crashed the server. A server started with `npx` takes them
+  on its next start.
+
 ## 0.4.0
 
 ### Minor Changes
