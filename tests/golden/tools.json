@@ -21,6 +21,10 @@
           "minLength": 1,
           "type": "string"
         },
+        "expandCases": {
+          "description": "Lists each case of a .each or .for table and each pass of a loop as its own test, with the name the runner gives it and caseIndex, as the runner registers them. Ids differ from those without it, so pass the same value to get_tests. Default: false, one test per declaration with caseCount.",
+          "type": "boolean"
+        },
         "framework": {
           "description": "The test runner. Default: the one the server was started with.",
           "enum": [
@@ -463,6 +467,10 @@
           "minLength": 1,
           "type": "string"
         },
+        "expandCases": {
+          "description": "Lists each case of a .each or .for table and each pass of a loop as its own test, with the name the runner gives it and caseIndex, as the runner registers them. Ids differ from those without it, so pass the same value to get_tests. Default: false, one test per declaration with caseCount.",
+          "type": "boolean"
+        },
         "fields": {
           "description": "Keys of each test record to return, besides id. Default: fullName, relativeFilePath, lineStart, state, reason, condition, tags.",
           "items": {
@@ -530,6 +538,7 @@
               "isBenchmark",
               "isParameterized",
               "caseCount",
+              "caseIndex",
               "isInLoop",
               "isInCondition",
               "isInFunction",
@@ -914,7 +923,19 @@
                     "type": "null"
                   }
                 ],
-                "description": "How many times the runner repeats the test: the cases of its own table times those of each describe table around it. Null when a table is not written out in the file, or the test is not parameterized."
+                "description": "How many times the runner repeats the test: the cases of its own table times those of each describe table and the passes of each loop around it. Null when the scan can't work out a table or a loop's values, or the test is neither parameterized nor in a loop."
+              },
+              "caseIndex": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "With `expandCases`, which case of its own table, or pass of the innermost loop around it inside its describe, the test is, from 0, as Vitest's `%#` counts; null without `expandCases`, or when the test isn't one of several. The case of a describe table or loop around the describe is the describe's `caseIndex`."
               },
               "columnEnd": {
                 "description": "In UTF-16 code units.",
@@ -1365,6 +1386,10 @@
           "minLength": 1,
           "type": "string"
         },
+        "expandCases": {
+          "description": "Lists each case of a .each or .for table and each pass of a loop as its own test, with the name the runner gives it and caseIndex, as the runner registers them. Ids differ from those without it, so pass the same value to get_tests. Default: false, one test per declaration with caseCount.",
+          "type": "boolean"
+        },
         "framework": {
           "description": "The test runner. Default: the one the server was started with.",
           "enum": [
@@ -1531,6 +1556,7 @@
                 "unresolved-tag",
                 "unresolved-annotation",
                 "unresolved-cases",
+                "cases-not-expanded",
                 "test-in-loop",
                 "dynamic-title",
                 "duplicate-title",
@@ -1761,7 +1787,19 @@
                   "type": "null"
                 }
               ],
-              "description": "How many times the runner repeats the test: the cases of its own table times those of each describe table around it. Null when a table is not written out in the file, or the test is not parameterized."
+              "description": "How many times the runner repeats the test: the cases of its own table times those of each describe table and the passes of each loop around it. Null when the scan can't work out a table or a loop's values, or the test is neither parameterized nor in a loop."
+            },
+            "caseIndex": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "With `expandCases`, which case of its own table, or pass of the innermost loop around it inside its describe, the test is, from 0, as Vitest's `%#` counts; null without `expandCases`, or when the test isn't one of several. The case of a describe table or loop around the describe is the describe's `caseIndex`."
             },
             "columnEnd": {
               "description": "In UTF-16 code units.",
@@ -2233,6 +2271,7 @@
             "isBenchmark",
             "isParameterized",
             "caseCount",
+            "caseIndex",
             "isInLoop",
             "isInCondition",
             "isInFunction",
@@ -2356,6 +2395,7 @@
               "unresolved-tag",
               "unresolved-annotation",
               "unresolved-cases",
+              "cases-not-expanded",
               "test-in-loop",
               "dynamic-title",
               "duplicate-title",
@@ -2406,6 +2446,10 @@
           "description": "A folder inside the project to scan, relative to its root, such as \"packages/web\". Default: the root.",
           "minLength": 1,
           "type": "string"
+        },
+        "expandCases": {
+          "description": "Lists each case of a .each or .for table and each pass of a loop as its own test, with the name the runner gives it and caseIndex, as the runner registers them. Ids differ from those without it, so pass the same value to get_tests. Default: false, one test per declaration with caseCount.",
+          "type": "boolean"
         },
         "framework": {
           "description": "The test runner. Default: the one the server was started with.",
@@ -2538,6 +2582,7 @@
                 "unresolved-tag",
                 "unresolved-annotation",
                 "unresolved-cases",
+                "cases-not-expanded",
                 "test-in-loop",
                 "dynamic-title",
                 "duplicate-title",

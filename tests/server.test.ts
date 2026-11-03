@@ -317,7 +317,7 @@ describe('get_tests', () => {
       { ids: ['8be9925edcd4647c', '0000000000000000', 'dbb8916ae393be67', '8be9925edcd4647c'] },
     );
     expect(answer.tests).toEqual([quote, login]);
-    expect(answer.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(['test-in-loop', 'dynamic-title']);
+    expect(answer.diagnostics.map((diagnostic) => diagnostic.code)).toEqual(['dynamic-title']);
     expect(answer.notFound).toEqual(['0000000000000000']);
     expect(answer.hint).toBe('Ids in notFound are not in this scan; find_tests returns the current ones.');
   });
@@ -355,18 +355,21 @@ describe('scan_diagnostics', () => {
   });
   afterEach(() => connection.close());
 
+  // The exchange simulator's suite uses values from an installed package, which the scan doesn't read.
+  const withSimulator = { patterns: ['tests/**/*.spec.ts', 'sim/**/*.spec.ts'] };
   const codes = async (args: Record<string, unknown>) =>
-    (await call<{ diagnostics: Diagnostic[] }>(connection.client, 'scan_diagnostics', args)).diagnostics.map(
-      (diagnostic) => `${diagnostic.relativeFilePath} ${diagnostic.code}`,
-    );
+    (
+      await call<{ diagnostics: Diagnostic[] }>(connection.client, 'scan_diagnostics', { ...withSimulator, ...args })
+    ).diagnostics.map((diagnostic) => `${diagnostic.relativeFilePath} ${diagnostic.code}`);
 
   it('returns every problem of the scan by default', async () => {
-    const answer = await call(connection.client, 'scan_diagnostics');
+    const answer = await call(connection.client, 'scan_diagnostics', withSimulator);
+    const scanned = await scan({ root: tradingWeb.root, ...withSimulator, framework: 'playwright' });
     expect(answer).toEqual({
       framework: 'playwright',
       frameworkVersion: '1.63.0',
-      total: 3,
-      diagnostics: expected.diagnostics,
+      total: 4,
+      diagnostics: scanned.diagnostics,
       nextCursor: null,
       hint: null,
     });
@@ -375,25 +378,70 @@ describe('scan_diagnostics', () => {
   it('keeps the problems of a level, a code, a file or a folder', async () => {
     expect(await codes({ levels: ['error'] })).toEqual([]);
     expect(await codes({ codes: ['dynamic-title', 'unresolved-tag'] })).toEqual([
-      'tests/orders/limit-orders.spec.ts unresolved-tag',
+      'sim/halted-symbols.spec.ts dynamic-title',
+      'sim/halted-symbols.spec.ts unresolved-tag',
       'tests/quotes.spec.ts dynamic-title',
     ]);
-    expect(await codes({ path: 'tests/quotes.spec.ts' })).toEqual([
-      'tests/quotes.spec.ts test-in-loop',
-      'tests/quotes.spec.ts dynamic-title',
+    expect(await codes({ path: 'tests/quotes.spec.ts' })).toEqual(['tests/quotes.spec.ts dynamic-title']);
+    expect(await codes({ path: 'sim' })).toEqual([
+      'sim/halted-symbols.spec.ts test-in-loop',
+      'sim/halted-symbols.spec.ts dynamic-title',
+      'sim/halted-symbols.spec.ts unresolved-tag',
     ]);
-    expect(await codes({ path: 'tests/orders' })).toEqual(['tests/orders/limit-orders.spec.ts unresolved-tag']);
-    expect(await codes({ path: 'tests/orders/' })).toEqual(['tests/orders/limit-orders.spec.ts unresolved-tag']);
+    expect(await codes({ path: 'sim/' })).toHaveLength(3);
   });
 
   it('pages the problems', async () => {
     const first = await call<{ diagnostics: Diagnostic[]; nextCursor: string; hint: string }>(
       connection.client,
       'scan_diagnostics',
-      { limit: 2 },
+      { ...withSimulator, limit: 2 },
     );
     expect(first.diagnostics).toHaveLength(2);
-    expect(first.hint).toBe('Showing 2 of 3. Pass nextCursor as `cursor` for more, or narrow the filters.');
+    expect(first.hint).toBe('Showing 2 of 4. Pass nextCursor as `cursor` for more, or narrow the filters.');
+  });
+});
+
+describe('expandCases', () => {
+  let connection: Connection;
+  beforeEach(async () => {
+    connection = await connect(tradingWeb);
+  });
+  afterEach(() => connection.close());
+
+  it('lists each pass of a loop as its own test, with the name the runner gives it', async () => {
+    const args = { grep: 'live quote', fields: ['fullName', 'caseIndex', 'caseCount'] };
+    const plain = await call<FoundTests>(connection.client, 'find_tests', args);
+    expect(plain.tests).toEqual([
+      {
+        id: '8be9925edcd4647c',
+        fullName: 'quotes > `shows a live quote for ${symbol}`',
+        caseIndex: null,
+        caseCount: 4,
+      },
+    ]);
+    const expanded = await call<FoundTests>(connection.client, 'find_tests', { ...args, expandCases: true });
+    expect(expanded.tests.map((test) => [test.fullName, test.caseIndex, test.caseCount])).toEqual([
+      ['quotes > shows a live quote for AAPL', 0, 1],
+      ['quotes > shows a live quote for MSFT', 1, 1],
+      ['quotes > shows a live quote for NVDA', 2, 1],
+      ['quotes > shows a live quote for AMZN', 3, 1],
+    ]);
+  });
+
+  it('finds the ids of expanded tests only when get_tests expands too, and counts the runner tests', async () => {
+    const found = await call<FoundTests>(connection.client, 'find_tests', { grep: 'AMZN', expandCases: true });
+    const ids = found.tests.map((test) => test.id as string);
+    const expanded = await call<{ tests: TestRecord[]; notFound: string[] }>(connection.client, 'get_tests', {
+      ids,
+      expandCases: true,
+    });
+    expect(expanded.tests.map((test) => test.title)).toEqual(['shows a live quote for AMZN']);
+    const plain = await call<{ notFound: string[] }>(connection.client, 'get_tests', { ids });
+    expect(plain.notFound).toEqual(ids);
+    const summary = (args: Record<string, unknown>) =>
+      call<{ summary: { testCount: number } }>(connection.client, 'test_summary', args);
+    expect((await summary({ expandCases: true })).summary.testCount).toBe((await summary({})).summary.testCount + 3);
   });
 });
 

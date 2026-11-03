@@ -80,7 +80,10 @@ test-inventory's [`--related`](https://huldoser.github.io/test-inventory/guide/c
 tests as fit in one answer, with the other ids in `remaining`.
 
 Every tool also takes `directory`, a folder inside the project to scan, and `framework` and `patterns` to override
-the command line. Records have the keys of test-inventory's
+the command line, and `expandCases`, which lists each case of a `.each` or `.for` table and each pass of a loop as
+its own test, with the name the runner gives it, as test-inventory's
+[`--expand-cases`](https://huldoser.github.io/test-inventory/guide/cli) does. Ids differ with it, so `get_tests` takes
+the same `expandCases` as the `find_tests` call the ids came from. Records have the keys of test-inventory's
 [output format](https://huldoser.github.io/test-inventory/reference/output).
 
 Answers are JSON, sent both as structured content and as text. Lists come 50 items at a time (`limit` takes up to

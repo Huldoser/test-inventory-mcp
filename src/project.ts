@@ -17,6 +17,7 @@ export interface ScanArguments {
   directory?: string;
   framework?: Framework;
   patterns?: string[];
+  expandCases?: boolean;
 }
 
 const MISSING =
@@ -76,5 +77,5 @@ export async function scanProject(config: ServerConfig, args: ScanArguments): Pr
   args.patterns?.forEach(checkPattern);
   const root = args.directory === undefined ? config.root : await directoryIn(config.root, args.directory);
   const patterns = args.patterns ?? (config.patterns.length > 0 ? config.patterns : undefined);
-  return scan({ root, patterns, framework });
+  return scan({ root, patterns, framework, expandCases: args.expandCases });
 }
