@@ -15,7 +15,7 @@ it pick the files instead, as on test-inventory's command line.
 **Claude Code**, in the project folder. `--scope project` writes `.mcp.json`, for everyone who works on the project:
 
 ```sh
-claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.4 --framework playwright
+claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.5 --framework playwright
 ```
 
 **Cursor**, in `.cursor/mcp.json`:
@@ -25,7 +25,7 @@ claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.4 -
   "mcpServers": {
     "test-inventory": {
       "command": "npx",
-      "args": ["-y", "test-inventory-mcp@0.4", "--framework", "playwright"]
+      "args": ["-y", "test-inventory-mcp@0.5", "--framework", "playwright"]
     }
   }
 }
@@ -39,7 +39,7 @@ claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.4 -
     "test-inventory": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "test-inventory-mcp@0.4", "--framework", "playwright"]
+      "args": ["-y", "test-inventory-mcp@0.5", "--framework", "playwright"]
     }
   }
 }
@@ -102,7 +102,7 @@ as content of that project, not as instructions. To report a vulnerability, see 
 ## Versioning
 
 Tool names, their arguments and their answers are the server's API. Before 1.0, a change that breaks them raises the
-minor version, so `test-inventory-mcp@0.4` in the setup above gets fixes only.
+minor version, so `test-inventory-mcp@0.5` in the setup above gets fixes only.
 
 ## License
 
