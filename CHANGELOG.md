@@ -1,5 +1,15 @@
 # test-inventory-mcp
 
+## 0.5.0
+
+### Minor Changes
+
+- [#19](https://github.com/Huldoser/test-inventory-mcp/pull/19) [`a641650`](https://github.com/Huldoser/test-inventory-mcp/commit/a64165056c2eabe41460dcb6683a6818ffa50c69) - Requires test-inventory 0.7.0, so a server npx starts installs again and works out values imported from project files
+  and counts loops over known values. Every tool takes a new `expandCases` argument, which lists each case of a `.each`
+  or `.for` table and each pass of a loop as its own test, with the name the runner gives it and `caseIndex`; `get_tests`
+  takes it too, as the ids of expanded tests differ. Answers have test-inventory 0.7.0's new `caseIndex` key and
+  `cases-not-expanded` diagnostic.
+
 ## 0.4.1
 
 ### Patch Changes
