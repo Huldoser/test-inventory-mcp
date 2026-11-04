@@ -58,12 +58,13 @@ the folder the client starts the server in.
 test-inventory-mcp [--framework <playwright|vitest|jest>] [<glob...>] [--root <dir>]
 ```
 
-| Option                | Meaning                                                                                                  |
-| --------------------- | -------------------------------------------------------------------------------------------------------- |
-| `--framework <name>`  | `playwright`, `vitest` or `jest`. Without it, the runner the project uses. A tool call can pass another. |
-| `<glob...>`           | The test files, relative to the project, in place of those the configs run. A tool call can pass others. |
-| `--root <dir>`        | The project. Tool calls can scan folders inside it, never outside.                                       |
-| `--help`, `--version` | Print the help or the version.                                                                           |
+| Option               | Meaning                                                                                                  |
+| -------------------- | -------------------------------------------------------------------------------------------------------- |
+| `--framework <name>` | `playwright`, `vitest` or `jest`. Without it, the runner the project uses. A tool call can pass another. |
+| `<glob...>`          | The test files, relative to the project, in place of those the configs run. A tool call can pass others. |
+| `--root <dir>`       | The project. Tool calls can scan folders inside it, never outside.                                       |
+| `-h`, `--help`       | Print the help.                                                                                          |
+| `-v`, `--version`    | Print the version.                                                                                       |
 
 ## Tools
 
@@ -71,25 +72,27 @@ test-inventory-mcp [--framework <playwright|vitest|jest>] [<glob...>] [--root <d
 | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `test_summary`     | Counts by state, tag and annotation, and the configs with their projects; with `groupBy`, the counts of each file, tag or project. |
 | `find_tests`       | The tests that match `states`, `tags`, `grep`, `related`, `projects`, `only` or `withoutReason`, with the `fields` you pick.       |
-| `get_tests`        | Every key of up to 20 tests by id, with the scan's diagnostics about them.                                                         |
-| `scan_diagnostics` | The problems the scan found, such as a file that failed to parse, by level, code or path.                                          |
+| `get_tests`        | Every key of up to 20 tests by `ids`, with the scan's diagnostics about them; ids it can't find come back in `notFound`.           |
+| `scan_diagnostics` | The problems the scan found, such as a file that failed to parse, by `levels`, `codes` or `path`.                                  |
 
 `related` takes the files a change touches, from the project root as `git diff --name-only` writes them, and keeps
 the tests whose `dependencies` include one of them, and those that reach code the scan can't follow, as
 test-inventory's [`--related`](https://huldoser.github.io/test-inventory/guide/cli#tests-a-change-can-affect) does.
 `dependencies` can list hundreds of files, so it isn't among the default `fields`, and `get_tests` returns as many
-tests as fit in one answer, with the other ids in `remaining`.
+tests as fit in one answer, with the other ids in `remaining`. An id stays the same when a test moves to another
+line, and changes when its title, describes or file change.
 
-Every tool also takes `directory`, a folder inside the project to scan, and `framework` and `patterns` to override
-the command line, and `expandCases`, which lists each case of a `.each` or `.for` table and each pass of a loop as
-its own test, with the name the runner gives it, as test-inventory's
+Every tool also takes `directory`, a folder inside the project to scan, and `framework` and `patterns`, relative to
+`directory`, to override the command line, and `expandCases`, which lists each case of a `.each` or `.for` table and
+each pass of a loop as its own test, with the name the runner gives it, as test-inventory's
 [`--expand-cases`](https://huldoser.github.io/test-inventory/guide/cli) does. Ids differ with it, so `get_tests` takes
 the same `expandCases` as the `find_tests` call the ids came from. Records have the keys of test-inventory's
 [output format](https://huldoser.github.io/test-inventory/reference/output).
 
 Answers are JSON, sent both as structured content and as text. Lists come 50 items at a time (`limit` takes up to
-200), and an answer stays under about 30,000 characters; `nextCursor` gets the next page. `scanErrors` counts the
-problems that may leave tests out, and `hint` says what to do next when there is something to say.
+200), and an answer stays under about 30,000 characters; passing `nextCursor` back as `cursor` gets the next page.
+`scanErrors` counts the problems that may leave tests out, and `hint` says what to do next when there is something to
+say.
 
 ## Security
 
