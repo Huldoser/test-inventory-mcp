@@ -25,7 +25,7 @@ import {
 } from './schema.ts';
 
 export const INSTRUCTIONS =
-  "test-inventory reads a project's Playwright or Vitest test files and configs and reports every test from its " +
+  "test-inventory reads a project's Playwright, Vitest or Jest test files and configs and reports every test from its " +
   'source code, without running anything: its state (active, skip, fixme, todo, expectedToFail, notLoaded), skip ' +
   'reasons and conditions, tags, annotations and location, the projects that run it, the hooks around it, timeouts ' +
   'and retries and where they are set, fixtures, assertion counts and steps, and the files each test runs ' +
@@ -50,9 +50,11 @@ const scanArguments = {
     .optional()
     .describe('A folder inside the project to scan, relative to its root, such as "packages/web". Default: the root.'),
   framework: z
-    .enum(['playwright', 'vitest'])
+    .enum(['playwright', 'vitest', 'jest'])
     .optional()
-    .describe('The test runner. Default: the one the server was started with.'),
+    .describe(
+      'The test runner. Default: the one the server was started with, otherwise the one the project in `directory` uses.',
+    ),
   patterns: z
     .array(z.string().min(1))
     .min(1)

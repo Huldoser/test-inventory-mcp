@@ -36,9 +36,9 @@ describe('bin', () => {
 
   it('prints a usage error to standard error and exits with 2', async () => {
     const write = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
-    process.argv = [process.execPath, 'test-inventory-mcp', '--framework', 'jest'];
+    process.argv = [process.execPath, 'test-inventory-mcp', '--framework', 'mocha'];
     await import('../src/bin.ts');
-    expect(write).toHaveBeenCalledWith(expect.stringContaining('--framework must be playwright or vitest'));
+    expect(write).toHaveBeenCalledWith(expect.stringContaining('--framework must be playwright, vitest or jest'));
     expect(process.exitCode).toBe(2);
   });
 });

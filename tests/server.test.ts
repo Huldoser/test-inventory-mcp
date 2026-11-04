@@ -452,11 +452,27 @@ describe('a server started without test files', () => {
   });
   afterEach(() => connection.close());
 
-  it('asks for a framework', async () => {
-    expect(await callError(connection.client, 'test_summary', { directory: 'order-service' })).toBe(
-      'This server was started without a test runner, so pass `framework`: "playwright" or "vitest". Without ' +
-        '`patterns`, the test files are those the configs in `directory` and the folders below it run.',
+  it('asks for a framework when the project uses several runners', async () => {
+    expect(await callError(connection.client, 'test_summary')).toBe(
+      '`framework` is needed, as the project uses Playwright, Vitest and Jest: scan it once with each of ' +
+        '"playwright", "vitest", "jest".',
     );
+  });
+
+  it('takes the runner the project in `directory` uses when the call names none', async () => {
+    for (const [directory, framework] of [
+      ['order-service', 'vitest'],
+      ['settlement-service', 'jest'],
+    ] as const) {
+      const answer = await call<{ framework: string; summary: { testCount: number } }>(
+        connection.client,
+        'test_summary',
+        { directory },
+      );
+      const scanned = await scan({ root: path.join(path.dirname(tradingWeb.root), directory), framework });
+      expect(scanned.summary.testCount).toBeGreaterThan(0);
+      expect(answer).toMatchObject({ framework, summary: { testCount: scanned.summary.testCount } });
+    }
   });
 
   it('scans the files the configs run when a call gives no patterns', async () => {

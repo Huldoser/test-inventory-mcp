@@ -27,6 +27,16 @@ describe('parseCommandLine', () => {
     });
   });
 
+  it('serves Jest, and globs without a framework, for the runner the project uses', () => {
+    const settlementService = path.join(fixtures, 'settlement-service');
+    expect(parseCommandLine(['--framework', 'jest'], {}, settlementService)).toEqual({
+      config: { root: settlementService, framework: 'jest', patterns: [] },
+    });
+    expect(parseCommandLine(['src/**/*.test.js'], {}, settlementService)).toEqual({
+      config: { root: settlementService, framework: null, patterns: ['src/**/*.test.js'] },
+    });
+  });
+
   it('serves without test files, for tool calls to name them', () => {
     expect(parseCommandLine([], {}, tradingWeb)).toEqual({
       config: { root: tradingWeb, framework: null, patterns: [] },
@@ -52,11 +62,8 @@ describe('parseCommandLine', () => {
       exitCode: 2,
       text: expect.stringMatching(/^test-inventory-mcp: .*'--frmework'/) as string,
     });
-    expect(parseCommandLine(['src/**/*.test.ts', '--framework', 'jest'], {}, fixtures)).toEqual(
-      usage('--framework must be playwright or vitest; got "jest".'),
-    );
-    expect(parseCommandLine(['src/**/*.test.ts'], {}, fixtures)).toEqual(
-      usage('the globs need --framework, the runner they are for.'),
+    expect(parseCommandLine(['src/**/*.test.ts', '--framework', 'mocha'], {}, fixtures)).toEqual(
+      usage('--framework must be playwright, vitest or jest; got "mocha".'),
     );
   });
 

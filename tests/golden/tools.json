@@ -26,10 +26,11 @@
           "type": "boolean"
         },
         "framework": {
-          "description": "The test runner. Default: the one the server was started with.",
+          "description": "The test runner. Default: the one the server was started with, otherwise the one the project in `directory` uses.",
           "enum": [
             "playwright",
-            "vitest"
+            "vitest",
+            "jest"
           ],
           "type": "string"
         },
@@ -145,7 +146,8 @@
             {
               "enum": [
                 "playwright",
-                "vitest"
+                "vitest",
+                "jest"
               ],
               "type": "string"
             },
@@ -550,10 +552,11 @@
           "type": "array"
         },
         "framework": {
-          "description": "The test runner. Default: the one the server was started with.",
+          "description": "The test runner. Default: the one the server was started with, otherwise the one the project in `directory` uses.",
           "enum": [
             "playwright",
-            "vitest"
+            "vitest",
+            "jest"
           ],
           "type": "string"
         },
@@ -686,7 +689,8 @@
             {
               "enum": [
                 "playwright",
-                "vitest"
+                "vitest",
+                "jest"
               ],
               "type": "string"
             },
@@ -1236,7 +1240,7 @@
                     "type": "null"
                   }
                 ],
-                "description": "Vitest only: milliseconds between retries, from the `retry` object (4.1)."
+                "description": "Milliseconds between retries: Vitest's from the `retry` object (4.1), Jest's from `waitBeforeRetry` of `jest.retryTimes()` (30.0); null otherwise."
               },
               "slowCondition": {
                 "description": "Source text of the condition of the `test.slow()` that applies; null when unconditional or not slow.",
@@ -1391,10 +1395,11 @@
           "type": "boolean"
         },
         "framework": {
-          "description": "The test runner. Default: the one the server was started with.",
+          "description": "The test runner. Default: the one the server was started with, otherwise the one the project in `directory` uses.",
           "enum": [
             "playwright",
-            "vitest"
+            "vitest",
+            "jest"
           ],
           "type": "string"
         },
@@ -1567,6 +1572,7 @@
                 "test-without-body",
                 "describe-not-called",
                 "async-describe",
+                "describe-throws",
                 "nested-test",
                 "tag-without-at",
                 "removed-api",
@@ -1613,7 +1619,8 @@
             {
               "enum": [
                 "playwright",
-                "vitest"
+                "vitest",
+                "jest"
               ],
               "type": "string"
             },
@@ -2100,7 +2107,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Vitest only: milliseconds between retries, from the `retry` object (4.1)."
+              "description": "Milliseconds between retries: Vitest's from the `retry` object (4.1), Jest's from `waitBeforeRetry` of `jest.retryTimes()` (30.0); null otherwise."
             },
             "slowCondition": {
               "description": "Source text of the condition of the `test.slow()` that applies; null when unconditional or not slow.",
@@ -2406,6 +2413,7 @@
               "test-without-body",
               "describe-not-called",
               "async-describe",
+              "describe-throws",
               "nested-test",
               "tag-without-at",
               "removed-api",
@@ -2452,10 +2460,11 @@
           "type": "boolean"
         },
         "framework": {
-          "description": "The test runner. Default: the one the server was started with.",
+          "description": "The test runner. Default: the one the server was started with, otherwise the one the project in `directory` uses.",
           "enum": [
             "playwright",
-            "vitest"
+            "vitest",
+            "jest"
           ],
           "type": "string"
         },
@@ -2593,6 +2602,7 @@
                 "test-without-body",
                 "describe-not-called",
                 "async-describe",
+                "describe-throws",
                 "nested-test",
                 "tag-without-at",
                 "removed-api",
@@ -2639,7 +2649,8 @@
             {
               "enum": [
                 "playwright",
-                "vitest"
+                "vitest",
+                "jest"
               ],
               "type": "string"
             },
