@@ -6,7 +6,7 @@ import { scan, type Framework, type Inventory } from 'test-inventory';
 export interface ServerConfig {
   /** The project, as a real path. */
   root: string;
-  /** Used when a tool call gives none; null when the start command named none. */
+  /** Used when a tool call gives none; null when the start command named none, for the one the project uses. */
   framework: Framework | null;
   /** Used when a tool call gives none; without them, the configs choose the test files. */
   patterns: string[];
@@ -19,10 +19,6 @@ export interface ScanArguments {
   patterns?: string[];
   expandCases?: boolean;
 }
-
-const MISSING =
-  'This server was started without a test runner, so pass `framework`: "playwright" or "vitest". Without ' +
-  '`patterns`, the test files are those the configs in `directory` and the folders below it run.';
 
 /** A pattern from a tool call stays inside the folder it is scanned from: no absolute path and no `..`. */
 function checkPattern(pattern: string): void {
@@ -72,10 +68,15 @@ async function directoryIn(root: string, directory: string): Promise<string> {
 
 /** Scans what the arguments name, falling back to what the server was started with. */
 export async function scanProject(config: ServerConfig, args: ScanArguments): Promise<Inventory> {
-  const framework = args.framework ?? config.framework;
-  if (framework === null) throw new Error(MISSING);
+  const framework = args.framework ?? config.framework ?? undefined;
   args.patterns?.forEach(checkPattern);
   const root = args.directory === undefined ? config.root : await directoryIn(config.root, args.directory);
   const patterns = args.patterns ?? (config.patterns.length > 0 ? config.patterns : undefined);
-  return scan({ root, patterns, framework, expandCases: args.expandCases });
+  try {
+    return await scan({ root, patterns, framework, expandCases: args.expandCases });
+  } catch (error) {
+    // The scan throws only for its options. Without a runner named, it takes the one the project uses, and with none
+    // or several it says what to pass, named as the tool argument.
+    throw new Error((error as TypeError).message.replace('options.framework', '`framework`'));
+  }
 }

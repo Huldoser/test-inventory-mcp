@@ -8,12 +8,13 @@ export const serverVersion: string = (
   JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version: string }
 ).version;
 
-export const HELP = `Usage: test-inventory-mcp [--framework <playwright|vitest> [<glob...>]] [--root <dir>]
+export const HELP = `Usage: test-inventory-mcp [--framework <playwright|vitest|jest>] [<glob...>] [--root <dir>]
 
 An MCP server on standard input and output. It answers an AI agent's questions about the
 tests of a project from their source code, without running them.
 
-  --framework <name>           playwright or vitest; a tool call can pass the other
+  --framework <name>           playwright, vitest or jest; without it, the runner the project uses;
+                               a tool call can pass another
   <glob...>                    test files to scan, relative to the root; without them, those the configs
                                run; a tool call can pass others
   --root <dir>                 the project; defaults to $CLAUDE_PROJECT_DIR, then the current folder
@@ -21,7 +22,7 @@ tests of a project from their source code, without running them.
   -v, --version                show the version
 
 Example, in an MCP client's configuration:
-  npx -y test-inventory-mcp --framework playwright
+  npx -y test-inventory-mcp
 `;
 
 /** What the command line asks for: serving with a config, or printing a text and exiting. */
@@ -51,11 +52,8 @@ export function parseCommandLine(args: string[], env: NodeJS.ProcessEnv, cwd: st
   if (values.help === true) return { exitCode: 0, text: HELP };
   if (values.version === true) return { exitCode: 0, text: `${serverVersion}\n` };
   const framework = values.framework ?? null;
-  if (framework !== null && framework !== 'playwright' && framework !== 'vitest') {
-    return usageError(`--framework must be playwright or vitest; got "${framework}".`);
-  }
-  if (framework === null && positionals.length > 0) {
-    return usageError('the globs need --framework, the runner they are for.');
+  if (framework !== null && framework !== 'playwright' && framework !== 'vitest' && framework !== 'jest') {
+    return usageError(`--framework must be playwright, vitest or jest; got "${framework}".`);
   }
   const given = values.root ?? env.CLAUDE_PROJECT_DIR ?? cwd;
   let root: string;
