@@ -8,7 +8,10 @@ Notes for coding agents working in this repository. People should read CONTRIBUT
 - `npm test` builds `dist/` and runs all tests; `npm run coverage` must report 100% for every file in `src/`.
 - `npm run typecheck`, `npm run lint` and `npm run format:check` must pass.
 - `npm run test:pack` packs the package, installs the tarball and talks to it over stdio.
+- The README describes the server on `main` everywhere a behaviour shows: when you change one, search the README and
+  the tool descriptions for the old behaviour and update each place, not just one.
 - `npm run release` commits, pushes and opens a pull request. Run it only when a maintainer asks for that release, after
+  checking that the README describes every pending changeset (CONTRIBUTING.md, Releases) and after
   `npm run release -- --dry-run`. It leaves the checkout on the release branch, so switch back to `main` afterwards. If
   it fails or is refused, stop and report; never run its steps by hand.
 
