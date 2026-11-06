@@ -1,5 +1,19 @@
 # test-inventory-mcp
 
+## 0.7.1
+
+### Patch Changes
+
+- [#30](https://github.com/Huldoser/test-inventory-mcp/pull/30) [`1a503e3`](https://github.com/Huldoser/test-inventory-mcp/commit/1a503e307a613557e1e8f1f0dca775f9d7eb2050) - A pattern that reaches outside the project through a backslash escape, as `.\./secret/*.test.ts`, is refused on every
+  system. On Linux and macOS the glob reads `\.` as `.`, so the check, which looked for `..` between slashes and
+  backslashes, let it through, and the answer listed tests from outside the project.
+
+- [#31](https://github.com/Huldoser/test-inventory-mcp/pull/31) [`de056b0`](https://github.com/Huldoser/test-inventory-mcp/commit/de056b0b6f205ac0f6ce5a9416c07bc730f050c4) - The server requires test-inventory 0.9.1, so its answers have that release's fixes: tests written as
+  `(process.env.CI ? it.skip : it)(...)` are listed, `.mocharc.yml`, `bunfig.toml`, Cypress and WebdriverIO spec patterns,
+  Jest's `moduleNameMapper` and Vite's `'@': '/src'` alias are read as the runners read them, Playwright 1.65's
+  `test.skip('reason')` gives the reason, and node:test and Bun skip states follow their describes. A `bunfig.toml` in a
+  scanned project can no longer change what later calls of a running server read.
+
 ## 0.7.0
 
 ### Minor Changes
