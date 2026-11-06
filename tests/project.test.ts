@@ -94,6 +94,10 @@ describe('what a tool call scans', () => {
       '/etc/**',
       'C:\\Users\\**',
       '..\\**',
+      // Outside Windows a backslash escapes the next character, so these are `../` and `/etc` to the glob.
+      '.\\./outside/*.spec.ts',
+      'tests/\\.\\./\\.\\./outside/*.ts',
+      '\\/etc/**',
     ]) {
       expect(await callError(connection.client, 'find_tests', { patterns: ['tests/**/*.spec.ts', pattern] })).toBe(
         `The pattern "${pattern}" ${rest}`,

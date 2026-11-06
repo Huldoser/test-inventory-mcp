@@ -20,9 +20,18 @@ export interface ScanArguments {
   expandCases?: boolean;
 }
 
-/** A pattern from a tool call stays inside the folder it is scanned from: no absolute path and no `..`. */
+/**
+ * A pattern from a tool call stays inside the folder it is scanned from: no absolute path and no `..`. On Windows a
+ * backslash separates folders, and elsewhere it escapes the next character, so `.\./` is `../` to the glob; a pattern
+ * is refused when either reading leaves the folder, so the answer is the same on every system.
+ */
 function checkPattern(pattern: string): void {
-  if (path.posix.isAbsolute(pattern) || path.win32.isAbsolute(pattern) || pattern.split(/[\\/]/).includes('..')) {
+  const unescaped = pattern.replaceAll(/\\(.)/gs, '$1');
+  if (
+    path.posix.isAbsolute(unescaped) ||
+    path.win32.isAbsolute(pattern) ||
+    [...pattern.split(/[\\/]/), ...unescaped.split('/')].includes('..')
+  ) {
     throw new Error(
       `The pattern "${pattern}" reaches outside the folder it is scanned from. Patterns are relative to ` +
         '`directory` (the project root by default) and cannot start with "/" or a drive, or contain "..".',
