@@ -56,16 +56,16 @@ the folder the client starts the server in.
 ## Command line
 
 ```text
-test-inventory-mcp [--framework <playwright|vitest|jest>] [<glob...>] [--root <dir>]
+test-inventory-mcp [--framework <name>] [<glob...>] [--root <dir>]
 ```
 
-| Option               | Meaning                                                                                                  |
-| -------------------- | -------------------------------------------------------------------------------------------------------- |
-| `--framework <name>` | `playwright`, `vitest` or `jest`. Without it, the runner the project uses. A tool call can pass another. |
-| `<glob...>`          | The test files, relative to the project, in place of those the configs run. A tool call can pass others. |
-| `--root <dir>`       | The project. Tool calls can scan folders inside it, never outside.                                       |
-| `-h`, `--help`       | Print the help.                                                                                          |
-| `-v`, `--version`    | Print the version.                                                                                       |
+| Option               | Meaning                                                                                                                                                               |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--framework <name>` | `playwright`, `vitest`, `jest`, `mocha`, `jasmine`, `cypress`, `webdriverio`, `node` or `bun`. Without it, the runner the project uses. A tool call can pass another. |
+| `<glob...>`          | The test files, relative to the project, in place of those the configs run. A tool call can pass others.                                                              |
+| `--root <dir>`       | The project. Tool calls can scan folders inside it, never outside.                                                                                                    |
+| `-h`, `--help`       | Print the help.                                                                                                                                                       |
+| `-v`, `--version`    | Print the version.                                                                                                                                                    |
 
 ## Tools
 

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { parseCommandLine } from '../src/command-line.ts';
-import { relatedIn } from '../src/project.ts';
+import { relatedIn, scanProject } from '../src/project.ts';
 import { call, callError, connect, type Connection } from './helpers.ts';
 
 // A desk project next to a folder outside it, so a link and a path can try to reach out. The temporary folder is used
@@ -104,6 +104,16 @@ describe('what a tool call scans', () => {
   it('uses the patterns of the start command for another framework a call names', async () => {
     const answer = await call(connection.client, 'test_summary', { framework: 'vitest' });
     expect(answer).toMatchObject({ framework: 'vitest', summary: { fileCount: 3 } });
+  });
+});
+
+describe('a cancelled tool call', () => {
+  it('stops the scan with the reason the client gave', async () => {
+    const controller = new AbortController();
+    const reason = new Error('The agent cancelled the stop-loss question.');
+    controller.abort(reason);
+    const config = { root, framework: 'playwright' as const, patterns: ['tests/**/*.spec.ts'] };
+    await expect(scanProject(config, {}, controller.signal)).rejects.toBe(reason);
   });
 });
 

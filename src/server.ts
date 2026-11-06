@@ -290,7 +290,7 @@ export function createServer(config: ServerConfig): McpServer {
       ),
       annotations: { title: 'Test summary', ...READ_ONLY },
     },
-    ({ states, tags, grep, related, groupBy, limit, cursor, ...scan }, { signal }) =>
+    ({ states, tags, grep, related, groupBy, limit, cursor, ...scan }, { mcpReq: { signal } }) =>
       answer(async () => {
         const inventory = await scanProject(config, scan, signal);
         const matched = filterTests(inventory, { states, tags, grep, related }, scan.directory);
@@ -376,7 +376,10 @@ export function createServer(config: ServerConfig): McpServer {
       ),
       annotations: { title: 'Find tests', ...READ_ONLY },
     },
-    ({ states, tags, grep, related, projects, only, withoutReason, fields, limit, cursor, ...scan }, { signal }) =>
+    (
+      { states, tags, grep, related, projects, only, withoutReason, fields, limit, cursor, ...scan },
+      { mcpReq: { signal } },
+    ) =>
       answer(async () => {
         const inventory = await scanProject(config, scan, signal);
         const matched = filterTests(inventory, { states, tags, grep, related, only, withoutReason }, scan.directory);
@@ -448,7 +451,7 @@ export function createServer(config: ServerConfig): McpServer {
       ),
       annotations: { title: 'Get tests', ...READ_ONLY },
     },
-    ({ ids, ...scan }, { signal }) =>
+    ({ ids, ...scan }, { mcpReq: { signal } }) =>
       answer(async () => {
         const inventory = await scanProject(config, scan, signal);
         const byId = new Map(inventory.tests.map((test) => [test.id, test]));
@@ -514,7 +517,7 @@ export function createServer(config: ServerConfig): McpServer {
       ),
       annotations: { title: 'Scan diagnostics', ...READ_ONLY },
     },
-    ({ levels, codes, path, limit, cursor, ...scan }, { signal }) =>
+    ({ levels, codes, path, limit, cursor, ...scan }, { mcpReq: { signal } }) =>
       answer(async () => {
         const inventory = await scanProject(config, scan, signal);
         const folder = path?.endsWith('/') ? path : `${path}/`;

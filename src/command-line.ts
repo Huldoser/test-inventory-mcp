@@ -22,6 +22,10 @@ export const FRAMEWORKS = [
   'bun',
 ] as const satisfies readonly Framework[];
 
+function isFramework(name: string): name is Framework {
+  return (FRAMEWORKS as readonly string[]).includes(name);
+}
+
 export const HELP = `Usage: test-inventory-mcp [--framework <name>] [<glob...>] [--root <dir>]
 
 An MCP server on standard input and output. It answers an AI agent's questions about the
@@ -66,7 +70,7 @@ export function parseCommandLine(args: string[], env: NodeJS.ProcessEnv, cwd: st
   if (values.help === true) return { exitCode: 0, text: HELP };
   if (values.version === true) return { exitCode: 0, text: `${serverVersion}\n` };
   const framework = values.framework ?? null;
-  if (framework !== null && !(FRAMEWORKS as readonly string[]).includes(framework)) {
+  if (framework !== null && !isFramework(framework)) {
     return usageError(
       `--framework must be ${FRAMEWORKS.slice(0, -1).join(', ')} or ${FRAMEWORKS.at(-1)}; got "${framework}".`,
     );
