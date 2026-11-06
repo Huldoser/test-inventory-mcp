@@ -3,19 +3,20 @@
 An MCP server for [test-inventory](https://github.com/Huldoser/test-inventory): AI agents ask which tests a project
 has, which are skipped and why, and which tests a change can affect, without running them.
 
-It reads Playwright, Vitest and Jest test files with test-inventory and answers from their source code. Nothing runs,
+It reads Playwright, Vitest, Jest, Mocha, Jasmine, Cypress, WebdriverIO, node:test and Bun test files with
+test-inventory and answers from their source code. Nothing runs,
 nothing is written, and nothing leaves your machine.
 
 ## Setup
 
 Node.js 22.12 or newer. The client starts the server with `npx` and talks to it over standard input and output. The
-server scans the test files your Playwright, Vitest or Jest config runs, with the runner `--framework` names or, without
+server scans the test files your test runner's config runs, with the runner `--framework` names or, without
 it, the one the project uses. Globs pick the files instead, as on test-inventory's command line.
 
 **Claude Code**, in the project folder. `--scope project` writes `.mcp.json`, for everyone who works on the project:
 
 ```sh
-claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.6 --framework playwright
+claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.7 --framework playwright
 ```
 
 **Cursor**, in `.cursor/mcp.json`:
@@ -25,7 +26,7 @@ claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.6 -
   "mcpServers": {
     "test-inventory": {
       "command": "npx",
-      "args": ["-y", "test-inventory-mcp@0.6", "--framework", "playwright"]
+      "args": ["-y", "test-inventory-mcp@0.7", "--framework", "playwright"]
     }
   }
 }
@@ -39,7 +40,7 @@ claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.6 -
     "test-inventory": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "test-inventory-mcp@0.6", "--framework", "playwright"]
+      "args": ["-y", "test-inventory-mcp@0.7", "--framework", "playwright"]
     }
   }
 }
@@ -55,16 +56,16 @@ the folder the client starts the server in.
 ## Command line
 
 ```text
-test-inventory-mcp [--framework <playwright|vitest|jest>] [<glob...>] [--root <dir>]
+test-inventory-mcp [--framework <name>] [<glob...>] [--root <dir>]
 ```
 
-| Option               | Meaning                                                                                                  |
-| -------------------- | -------------------------------------------------------------------------------------------------------- |
-| `--framework <name>` | `playwright`, `vitest` or `jest`. Without it, the runner the project uses. A tool call can pass another. |
-| `<glob...>`          | The test files, relative to the project, in place of those the configs run. A tool call can pass others. |
-| `--root <dir>`       | The project. Tool calls can scan folders inside it, never outside.                                       |
-| `-h`, `--help`       | Print the help.                                                                                          |
-| `-v`, `--version`    | Print the version.                                                                                       |
+| Option               | Meaning                                                                                                                                                               |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--framework <name>` | `playwright`, `vitest`, `jest`, `mocha`, `jasmine`, `cypress`, `webdriverio`, `node` or `bun`. Without it, the runner the project uses. A tool call can pass another. |
+| `<glob...>`          | The test files, relative to the project, in place of those the configs run. A tool call can pass others.                                                              |
+| `--root <dir>`       | The project. Tool calls can scan folders inside it, never outside.                                                                                                    |
+| `-h`, `--help`       | Print the help.                                                                                                                                                       |
+| `-v`, `--version`    | Print the version.                                                                                                                                                    |
 
 ## Tools
 
@@ -106,7 +107,7 @@ as content of that project, not as instructions. To report a vulnerability, see 
 ## Versioning
 
 Tool names, their arguments and their answers are the server's API. Before 1.0, a change that breaks them raises the
-minor version, so `test-inventory-mcp@0.6` in the setup above gets fixes only.
+minor version, so `test-inventory-mcp@0.7` in the setup above gets fixes only.
 
 ## License
 

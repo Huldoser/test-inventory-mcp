@@ -30,7 +30,13 @@
           "enum": [
             "playwright",
             "vitest",
-            "jest"
+            "jest",
+            "mocha",
+            "jasmine",
+            "cypress",
+            "webdriverio",
+            "node",
+            "bun"
           ],
           "type": "string"
         },
@@ -106,7 +112,7 @@
       "additionalProperties": false,
       "definitions": {
         "ConfigRecord": {
-          "description": "A Playwright or Vitest config that scanned files use: the nearest one in a file's folder or a folder above it, up to the root, as the runner started in that folder would. Read as code, never run.",
+          "description": "A runner's config that scanned files use. For Playwright and Vitest, the nearest one in a file's folder or a folder above it, up to the root, as the runner started in that folder would; for Jest, the one at the root and the projects it names; for the other runners, the one config they read for the whole run. Read as code, never run.",
           "properties": {
             "extends": {
               "description": "Files the config takes settings from through imports, such as a shared base config, in the order read.",
@@ -127,7 +133,7 @@
                   "type": "null"
                 }
               ],
-              "description": "The projects the config runs tests in: Playwright's `projects`, or one for a config without them; Vitest's, with each browser instance as one. Null when the scan can't work them out."
+              "description": "The projects the config runs tests in: Playwright's `projects`, or one for a config without them; Vitest's, with each browser instance as one; Cypress's testing types, `e2e` and `component`; one for the other runners. Null when the scan can't work them out."
             },
             "relativeFilePath": {
               "description": "Path from the project root, with `/` separators.",
@@ -147,7 +153,13 @@
               "enum": [
                 "playwright",
                 "vitest",
-                "jest"
+                "jest",
+                "mocha",
+                "jasmine",
+                "cypress",
+                "webdriverio",
+                "node",
+                "bun"
               ],
               "type": "string"
             },
@@ -170,7 +182,7 @@
               "type": "string"
             },
             "testDir": {
-              "description": "The folder the project's test files are found in, from the project root: Playwright's `testDir`, Vitest's `dir`.",
+              "description": "The folder the project's test files are found in, from the project root: Playwright's `testDir`, Vitest's `dir`, Jest's `rootDir`, Jasmine's `spec_dir`, Bun's `[test] root`; for the other runners, the config's folder.",
               "type": "string"
             }
           },
@@ -483,6 +495,7 @@
               "dependencies",
               "hasUnfollowedDependencies",
               "suiteId",
+              "parentTestId",
               "suitePath",
               "relativeFilePath",
               "fileName",
@@ -556,7 +569,13 @@
           "enum": [
             "playwright",
             "vitest",
-            "jest"
+            "jest",
+            "mocha",
+            "jasmine",
+            "cypress",
+            "webdriverio",
+            "node",
+            "bun"
           ],
           "type": "string"
         },
@@ -690,7 +709,13 @@
               "enum": [
                 "playwright",
                 "vitest",
-                "jest"
+                "jest",
+                "mocha",
+                "jasmine",
+                "cypress",
+                "webdriverio",
+                "node",
+                "bun"
               ],
               "type": "string"
             },
@@ -1139,6 +1164,18 @@
                 ],
                 "description": "Merged from the describes and the test. Vitest only; literal values only."
               },
+              "parentTestId": {
+                "anyOf": [
+                  {
+                    "pattern": "^[0-9a-f]{16}$",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The test whose body declares this one as a subtest, which `node:test` runs while it runs that test; null for every other test."
+              },
               "projects": {
                 "anyOf": [
                   {
@@ -1173,7 +1210,7 @@
                     "type": "null"
                   }
                 ],
-                "description": "How many times the runner runs the test again after the first run: Vitest's `repeats`, or Playwright's `repeatEach` from the config less one."
+                "description": "How many times the runner runs the test again after the first run: Vitest's or Bun's `repeats`, or Playwright's `repeatEach` from the config less one."
               },
               "repeatsConfigText": {
                 "description": "The config's source text for `repeats`, Playwright's `repeatEach`, read as `timeoutConfigText` is.",
@@ -1295,7 +1332,7 @@
                 "description": "The nearest describe; null outside any describe."
               },
               "suitePath": {
-                "description": "Titles of the describes around the test, outermost first.",
+                "description": "Titles of the describes around the test, and of the tests a subtest is declared in, outermost first.",
                 "items": {
                   "type": "string"
                 },
@@ -1399,7 +1436,13 @@
           "enum": [
             "playwright",
             "vitest",
-            "jest"
+            "jest",
+            "mocha",
+            "jasmine",
+            "cypress",
+            "webdriverio",
+            "node",
+            "bun"
           ],
           "type": "string"
         },
@@ -1576,6 +1619,7 @@
                 "nested-test",
                 "tag-without-at",
                 "removed-api",
+                "invalid-fixture-argument",
                 "only-in-skipped-describe",
                 "config-may-change-state",
                 "undefined-tag",
@@ -1620,7 +1664,13 @@
               "enum": [
                 "playwright",
                 "vitest",
-                "jest"
+                "jest",
+                "mocha",
+                "jasmine",
+                "cypress",
+                "webdriverio",
+                "node",
+                "bun"
               ],
               "type": "string"
             },
@@ -2006,6 +2056,18 @@
               ],
               "description": "Merged from the describes and the test. Vitest only; literal values only."
             },
+            "parentTestId": {
+              "anyOf": [
+                {
+                  "pattern": "^[0-9a-f]{16}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The test whose body declares this one as a subtest, which `node:test` runs while it runs that test; null for every other test."
+            },
             "projects": {
               "anyOf": [
                 {
@@ -2040,7 +2102,7 @@
                   "type": "null"
                 }
               ],
-              "description": "How many times the runner runs the test again after the first run: Vitest's `repeats`, or Playwright's `repeatEach` from the config less one."
+              "description": "How many times the runner runs the test again after the first run: Vitest's or Bun's `repeats`, or Playwright's `repeatEach` from the config less one."
             },
             "repeatsConfigText": {
               "description": "The config's source text for `repeats`, Playwright's `repeatEach`, read as `timeoutConfigText` is.",
@@ -2162,7 +2224,7 @@
               "description": "The nearest describe; null outside any describe."
             },
             "suitePath": {
-              "description": "Titles of the describes around the test, outermost first.",
+              "description": "Titles of the describes around the test, and of the tests a subtest is declared in, outermost first.",
               "items": {
                 "type": "string"
               },
@@ -2221,6 +2283,7 @@
             "dependencies",
             "hasUnfollowedDependencies",
             "suiteId",
+            "parentTestId",
             "suitePath",
             "relativeFilePath",
             "fileName",
@@ -2417,6 +2480,7 @@
               "nested-test",
               "tag-without-at",
               "removed-api",
+              "invalid-fixture-argument",
               "only-in-skipped-describe",
               "config-may-change-state",
               "undefined-tag",
@@ -2464,7 +2528,13 @@
           "enum": [
             "playwright",
             "vitest",
-            "jest"
+            "jest",
+            "mocha",
+            "jasmine",
+            "cypress",
+            "webdriverio",
+            "node",
+            "bun"
           ],
           "type": "string"
         },
@@ -2606,6 +2676,7 @@
                 "nested-test",
                 "tag-without-at",
                 "removed-api",
+                "invalid-fixture-argument",
                 "only-in-skipped-describe",
                 "config-may-change-state",
                 "undefined-tag",
@@ -2650,7 +2721,13 @@
               "enum": [
                 "playwright",
                 "vitest",
-                "jest"
+                "jest",
+                "mocha",
+                "jasmine",
+                "cypress",
+                "webdriverio",
+                "node",
+                "bun"
               ],
               "type": "string"
             },

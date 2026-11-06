@@ -67,14 +67,16 @@ async function directoryIn(root: string, directory: string): Promise<string> {
 }
 
 /** Scans what the arguments name, falling back to what the server was started with. */
-export async function scanProject(config: ServerConfig, args: ScanArguments): Promise<Inventory> {
+export async function scanProject(config: ServerConfig, args: ScanArguments, signal?: AbortSignal): Promise<Inventory> {
   const framework = args.framework ?? config.framework ?? undefined;
   args.patterns?.forEach(checkPattern);
   const root = args.directory === undefined ? config.root : await directoryIn(config.root, args.directory);
   const patterns = args.patterns ?? (config.patterns.length > 0 ? config.patterns : undefined);
   try {
-    return await scan({ root, patterns, framework, expandCases: args.expandCases });
+    return await scan({ root, patterns, framework, expandCases: args.expandCases, signal });
   } catch (error) {
+    // A request the client cancelled stops the scan, with the reason the client gave.
+    if (signal?.aborted) throw error;
     // The scan throws only for its options. Without a runner named, it takes the one the project uses, and with none
     // or several it says what to pass, named as the tool argument.
     throw new Error((error as TypeError).message.replace('options.framework', '`framework`'));

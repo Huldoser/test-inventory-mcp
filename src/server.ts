@@ -10,7 +10,7 @@ import {
   type TestRecord,
 } from 'test-inventory';
 import * as z from 'zod/v4';
-import { serverVersion } from './command-line.ts';
+import { FRAMEWORKS, serverVersion } from './command-line.ts';
 import { DEFAULT_LIMIT, MAX_CHARACTERS, MAX_LIMIT, paginate } from './page.ts';
 import { relatedIn, scanProject, type ServerConfig } from './project.ts';
 import {
@@ -25,13 +25,14 @@ import {
 } from './schema.ts';
 
 export const INSTRUCTIONS =
-  "test-inventory reads a project's Playwright, Vitest or Jest test files and configs and reports every test from its " +
+  "test-inventory reads a project's Playwright, Vitest, Jest, Mocha, Jasmine, Cypress, WebdriverIO, node:test or Bun " +
+  'test files and configs and reports every test from its ' +
   'source code, without running anything: its state (active, skip, fixme, todo, expectedToFail, notLoaded), skip ' +
   'reasons and conditions, tags, annotations and location, the projects that run it, the hooks around it, timeouts ' +
   'and retries and where they are set, fixtures, assertion counts and steps, and the files each test runs ' +
   '(dependencies, with dependencyHash). Use it for questions such as which tests are skipped and why, which tests ' +
   'carry a tag or a project runs, which tests retry or have no assertions, how many tests a file has, whether a ' +
-  '.only was left in that forbidOnly fails in CI, or which tests a change can affect (related, with the changed ' +
+  '.only was left in that forbidOnly or allowOnly fails in CI, or which tests a change can affect (related, with the changed ' +
   'files). Pass expandCases for one test per .each case and loop pass, with the names the runner gives them. ' +
   'Start with test_summary ' +
   'for counts, find_tests to list matching tests, get_tests for every key of known ids, and scan_diagnostics when an ' +
@@ -50,7 +51,7 @@ const scanArguments = {
     .optional()
     .describe('A folder inside the project to scan, relative to its root, such as "packages/web". Default: the root.'),
   framework: z
-    .enum(['playwright', 'vitest', 'jest'])
+    .enum(FRAMEWORKS)
     .optional()
     .describe(
       'The test runner. Default: the one the server was started with, otherwise the one the project in `directory` uses.',
@@ -289,9 +290,9 @@ export function createServer(config: ServerConfig): McpServer {
       ),
       annotations: { title: 'Test summary', ...READ_ONLY },
     },
-    ({ states, tags, grep, related, groupBy, limit, cursor, ...scan }) =>
+    ({ states, tags, grep, related, groupBy, limit, cursor, ...scan }, { mcpReq: { signal } }) =>
       answer(async () => {
-        const inventory = await scanProject(config, scan);
+        const inventory = await scanProject(config, scan, signal);
         const matched = filterTests(inventory, { states, tags, grep, related }, scan.directory);
         const base = { ...scanOutput(inventory), summary: matched.summary, configs: inventory.configs };
         if (groupBy === undefined) {
@@ -375,9 +376,12 @@ export function createServer(config: ServerConfig): McpServer {
       ),
       annotations: { title: 'Find tests', ...READ_ONLY },
     },
-    ({ states, tags, grep, related, projects, only, withoutReason, fields, limit, cursor, ...scan }) =>
+    (
+      { states, tags, grep, related, projects, only, withoutReason, fields, limit, cursor, ...scan },
+      { mcpReq: { signal } },
+    ) =>
       answer(async () => {
-        const inventory = await scanProject(config, scan);
+        const inventory = await scanProject(config, scan, signal);
         const matched = filterTests(inventory, { states, tags, grep, related, only, withoutReason }, scan.directory);
         const run = projects
           ? matched.tests.filter((test) => test.projects?.some((name) => projects.includes(name)))
@@ -447,9 +451,9 @@ export function createServer(config: ServerConfig): McpServer {
       ),
       annotations: { title: 'Get tests', ...READ_ONLY },
     },
-    ({ ids, ...scan }) =>
+    ({ ids, ...scan }, { mcpReq: { signal } }) =>
       answer(async () => {
-        const inventory = await scanProject(config, scan);
+        const inventory = await scanProject(config, scan, signal);
         const byId = new Map(inventory.tests.map((test) => [test.id, test]));
         const wanted = [...new Set(ids)];
         const notFound = wanted.filter((id) => !byId.has(id));
@@ -513,9 +517,9 @@ export function createServer(config: ServerConfig): McpServer {
       ),
       annotations: { title: 'Scan diagnostics', ...READ_ONLY },
     },
-    ({ levels, codes, path, limit, cursor, ...scan }) =>
+    ({ levels, codes, path, limit, cursor, ...scan }, { mcpReq: { signal } }) =>
       answer(async () => {
-        const inventory = await scanProject(config, scan);
+        const inventory = await scanProject(config, scan, signal);
         const folder = path?.endsWith('/') ? path : `${path}/`;
         const diagnostics = inventory.diagnostics.filter(
           (diagnostic) =>
