@@ -1,6 +1,7 @@
 import { readFileSync, realpathSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { parseArgs } from 'node:util';
+import type { Framework } from 'test-inventory';
 import type { ServerConfig } from './project.ts';
 
 /** The version of this package, read from its package.json in both the sources and the build. */
@@ -8,13 +9,26 @@ export const serverVersion: string = (
   JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version: string }
 ).version;
 
-export const HELP = `Usage: test-inventory-mcp [--framework <playwright|vitest|jest>] [<glob...>] [--root <dir>]
+/** The runners test-inventory reads, as `--framework` and the tools' `framework` name them. */
+export const FRAMEWORKS = [
+  'playwright',
+  'vitest',
+  'jest',
+  'mocha',
+  'jasmine',
+  'cypress',
+  'webdriverio',
+  'node',
+  'bun',
+] as const satisfies readonly Framework[];
+
+export const HELP = `Usage: test-inventory-mcp [--framework <name>] [<glob...>] [--root <dir>]
 
 An MCP server on standard input and output. It answers an AI agent's questions about the
 tests of a project from their source code, without running them.
 
-  --framework <name>           playwright, vitest or jest; without it, the runner the project uses;
-                               a tool call can pass another
+  --framework <name>           playwright, vitest, jest, mocha, jasmine, cypress, webdriverio, node or
+                               bun; without it, the runner the project uses; a tool call can pass another
   <glob...>                    test files to scan, relative to the root; without them, those the configs
                                run; a tool call can pass others
   --root <dir>                 the project; defaults to $CLAUDE_PROJECT_DIR, then the current folder
@@ -52,8 +66,10 @@ export function parseCommandLine(args: string[], env: NodeJS.ProcessEnv, cwd: st
   if (values.help === true) return { exitCode: 0, text: HELP };
   if (values.version === true) return { exitCode: 0, text: `${serverVersion}\n` };
   const framework = values.framework ?? null;
-  if (framework !== null && framework !== 'playwright' && framework !== 'vitest' && framework !== 'jest') {
-    return usageError(`--framework must be playwright, vitest or jest; got "${framework}".`);
+  if (framework !== null && !(FRAMEWORKS as readonly string[]).includes(framework)) {
+    return usageError(
+      `--framework must be ${FRAMEWORKS.slice(0, -1).join(', ')} or ${FRAMEWORKS.at(-1)}; got "${framework}".`,
+    );
   }
   const given = values.root ?? env.CLAUDE_PROJECT_DIR ?? cwd;
   let root: string;

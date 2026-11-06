@@ -62,8 +62,10 @@ describe('parseCommandLine', () => {
       exitCode: 2,
       text: expect.stringMatching(/^test-inventory-mcp: .*'--frmework'/) as string,
     });
-    expect(parseCommandLine(['src/**/*.test.ts', '--framework', 'mocha'], {}, fixtures)).toEqual(
-      usage('--framework must be playwright, vitest or jest; got "mocha".'),
+    expect(parseCommandLine(['src/**/*.test.ts', '--framework', 'ava'], {}, fixtures)).toEqual(
+      usage(
+        '--framework must be playwright, vitest, jest, mocha, jasmine, cypress, webdriverio, node or bun; got "ava".',
+      ),
     );
   });
 

@@ -3,13 +3,14 @@
 An MCP server for [test-inventory](https://github.com/Huldoser/test-inventory): AI agents ask which tests a project
 has, which are skipped and why, and which tests a change can affect, without running them.
 
-It reads Playwright, Vitest and Jest test files with test-inventory and answers from their source code. Nothing runs,
+It reads Playwright, Vitest, Jest, Mocha, Jasmine, Cypress, WebdriverIO, node:test and Bun test files with
+test-inventory and answers from their source code. Nothing runs,
 nothing is written, and nothing leaves your machine.
 
 ## Setup
 
 Node.js 22.12 or newer. The client starts the server with `npx` and talks to it over standard input and output. The
-server scans the test files your Playwright, Vitest or Jest config runs, with the runner `--framework` names or, without
+server scans the test files your test runner's config runs, with the runner `--framework` names or, without
 it, the one the project uses. Globs pick the files instead, as on test-inventory's command line.
 
 **Claude Code**, in the project folder. `--scope project` writes `.mcp.json`, for everyone who works on the project:
