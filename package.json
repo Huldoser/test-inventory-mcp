@@ -11,6 +11,12 @@
     "playwright",
     "vitest",
     "jest",
+    "mocha",
+    "jasmine",
+    "cypress",
+    "webdriverio",
+    "bun",
+    "node-test",
     "test-inventory",
     "ai-agents"
   ],
