@@ -1,5 +1,13 @@
 # test-inventory-mcp
 
+## 0.7.0
+
+### Minor Changes
+
+- [#27](https://github.com/Huldoser/test-inventory-mcp/pull/27) [`ad1c66d`](https://github.com/Huldoser/test-inventory-mcp/commit/ad1c66d529e43640af7befc0573bd20869c54473) - Reads Mocha, Jasmine, Cypress, WebdriverIO, node:test and Bun projects too, with test-inventory 0.9.0: `--framework`
+  and every tool's `framework` take `mocha`, `jasmine`, `cypress`, `webdriverio`, `node` and `bun`. A tool call the client
+  cancels stops its scan between files.
+
 ## 0.6.0
 
 ### Minor Changes
