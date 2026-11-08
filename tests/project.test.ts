@@ -1,10 +1,13 @@
 import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import * as filesystem from 'node:fs/promises';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { parseCommandLine } from '../src/command-line.ts';
 import { relatedIn, scanProject } from '../src/project.ts';
 import { call, callError, connect, type Connection } from './helpers.ts';
+
+vi.mock('node:fs/promises', { spy: true });
 
 // A desk project next to a folder outside it, so a link and a path can try to reach out. The temporary folder is used
 // as given: on Windows it has 8.3 short names (RUNNER~1), which the root and the folders of tool calls must agree on.
@@ -15,6 +18,10 @@ let connection: Connection;
 beforeAll(async () => {
   mkdirSync(path.join(root, 'tests'), { recursive: true });
   mkdirSync(path.join(work, 'outside'));
+  writeFileSync(
+    path.join(work, 'outside', 'quotes.test.ts'),
+    "import { test } from 'vitest'; test('quotes an external venue', () => {});",
+  );
   writeFileSync(
     path.join(root, 'tests', 'stop-loss.spec.ts'),
     "import { test } from '@playwright/test';\n\ntest('triggers a stop-loss order at the stop price', async () => {});\n",
@@ -40,6 +47,36 @@ afterAll(async () => {
 });
 
 describe('what a tool call scans', () => {
+  it('accepts a project subdirectory when the configured root is a filesystem root', async () => {
+    const volume = path.parse(root).root;
+    const inventory = await scanProject(
+      { root: volume, framework: 'playwright', patterns: [] },
+      {
+        directory: path.relative(volume, root),
+        patterns: ['tests/stop-loss.spec.ts'],
+      },
+    );
+    expect(inventory.tests).toHaveLength(1);
+  });
+  it('keeps a completed scan when a source file disappears before the boundary check', async () => {
+    const original = filesystem.realpath;
+    const spy = vi.spyOn(filesystem, 'realpath').mockImplementation(async (file, options) => {
+      if (String(file).endsWith('stop-loss.spec.ts'))
+        throw Object.assign(new Error('removed after scan'), { code: 'ENOENT' });
+      return original(file, options as never);
+    });
+    try {
+      const inventory = await scanProject({ root, framework: 'playwright', patterns: ['tests/stop-loss.spec.ts'] }, {});
+      expect(inventory.tests).toHaveLength(1);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+  it('refuses test files reached through a link outside the project', async () => {
+    expect(
+      await callError(connection.client, 'find_tests', { framework: 'vitest', patterns: ['shared/*.test.ts'] }),
+    ).toContain('outside the project');
+  });
   it('counts the files that fail to parse as scan errors, and says where to look', async () => {
     const answer = await call(connection.client, 'find_tests');
     expect(answer).toMatchObject({

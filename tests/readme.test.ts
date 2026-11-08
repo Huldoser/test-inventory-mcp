@@ -33,7 +33,11 @@ describe('README', () => {
     const runners = (inventorySchema.definitions.Framework.anyOf[0] as { enum: string[] }).enum;
     const { tools } = await connection.client.listTools();
     for (const tool of tools) {
-      expect((tool.inputSchema.properties?.framework as { enum: string[] }).enum, tool.name).toEqual(runners);
+      if (tool.name === 'diff_inventories') {
+        expect(Object.keys(tool.inputSchema.properties ?? {})).toEqual(['before', 'after', 'limit', 'cursor']);
+      } else {
+        expect((tool.inputSchema.properties?.framework as { enum: string[] }).enum, tool.name).toEqual(runners);
+      }
     }
     expect(runners.filter((runner) => !spans.includes(runner))).toEqual([]);
   });

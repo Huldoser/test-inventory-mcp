@@ -39,4 +39,14 @@ describe('paginate', () => {
       '`cursor` is not a nextCursor this server returned. Call again without `cursor`.',
     );
   });
+
+  it.each([-1, 0, 40, 41])('refuses a cursor with an offset of %i outside the remaining results', (offset) => {
+    const first = page(orders, 2);
+    const position = JSON.parse(Buffer.from(first.nextCursor as string, 'base64url').toString('utf8')) as {
+      offset: number;
+      digest: string;
+    };
+    const cursor = Buffer.from(JSON.stringify({ ...position, offset })).toString('base64url');
+    expect(() => page(orders, 2, cursor)).toThrow('Call again without `cursor`.');
+  });
 });

@@ -52,6 +52,9 @@ export function paginate<T, Output>(
           'Call again without `cursor`.',
       );
     }
+    if (position.offset <= 0 || position.offset >= items.length) {
+      throw new Error('`cursor` points outside the remaining results. Call again without `cursor`.');
+    }
     offset = position.offset;
   }
   const build = (count: number) => {

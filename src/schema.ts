@@ -1,9 +1,10 @@
 import type { DiagnosticCode, DiagnosticLevel, TestRecord, TestState } from 'test-inventory';
 import inventorySchema from 'test-inventory/schema/v1.json' with { type: 'json' };
+import diffSchema from 'test-inventory/schema/diff-v1.json' with { type: 'json' };
 
 export type JsonSchema = Record<string, unknown>;
 
-const definitions = inventorySchema.definitions as Record<string, JsonSchema>;
+const definitions = { ...inventorySchema.definitions, ...diffSchema.definitions } as Record<string, JsonSchema>;
 
 /** The values an enum of test-inventory has now; its schema also accepts values added in later releases. */
 function knownValues<T extends string>(name: string): [T, ...T[]] {
