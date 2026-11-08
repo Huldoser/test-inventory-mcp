@@ -1103,11 +1103,11 @@
                 "type": "boolean"
               },
               "isNotLoaded": {
-                "description": "The runner refuses to load the file; a diagnostic at `stateLine` says why.",
+                "description": "The runner did not load this test, possibly because its describe failed; a diagnostic at `stateLine` says why.",
                 "type": "boolean"
               },
               "isOnly": {
-                "description": "The test or a describe around it uses `.only`.",
+                "description": "The test is selected by a `.only`, following the runner's focus rules.",
                 "type": "boolean"
               },
               "isParallel": {
@@ -1995,11 +1995,11 @@
               "type": "boolean"
             },
             "isNotLoaded": {
-              "description": "The runner refuses to load the file; a diagnostic at `stateLine` says why.",
+              "description": "The runner did not load this test, possibly because its describe failed; a diagnostic at `stateLine` says why.",
               "type": "boolean"
             },
             "isOnly": {
-              "description": "The test or a describe around it uses `.only`.",
+              "description": "The test is selected by a `.only`, following the runner's focus rules.",
               "type": "boolean"
             },
             "isParallel": {
@@ -2797,5 +2797,1325 @@
       "type": "object"
     },
     "title": "Scan diagnostics"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Diff inventories"
+    },
+    "description": "Compares two complete saved JSON scans inside the project, without running tests or changing files. Reports additions, removals, renames, moves, code and dependency changes, states, tags and other metadata. Uses ids first, then unique body hashes and file, suite or dependency context; ambiguous matches remain added and removed. Use the same framework, root, patterns, filters and expandCases for both saved scans. Hash comparisons and rename matching are disabled across tool versions. Follow nextCursor for more changes. For Playwright, Vitest, Jest, Mocha, Jasmine, Cypress, WebdriverIO, node:test and Bun inventories. Example: {\"before\":\"inventories/base.json\",\"after\":\"inventories/head.json\"}.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "properties": {
+        "after": {
+          "description": "The new complete JSON inventory, relative to the project root; at most 128 MiB.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "before": {
+          "description": "The old complete JSON inventory, relative to the project root; at most 128 MiB.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "cursor": {
+          "description": "nextCursor from the previous answer, for the next page. Keep the other arguments the same.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "limit": {
+          "default": 50,
+          "description": "The most items to return.",
+          "maximum": 200,
+          "minimum": 1,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "before",
+        "after"
+      ],
+      "type": "object"
+    },
+    "name": "diff_inventories",
+    "outputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "definitions": {
+        "Annotation": {
+          "properties": {
+            "description": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "lineStart": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "type": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "type",
+            "description",
+            "lineStart"
+          ],
+          "type": "object"
+        },
+        "ChangeKind": {
+          "anyOf": [
+            {
+              "enum": [
+                "added",
+                "removed",
+                "moved",
+                "renamed",
+                "bodyChanged",
+                "dependenciesChanged",
+                "newlySkipped",
+                "reEnabled",
+                "stateChanged",
+                "tagsChanged",
+                "metadataChanged"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Changes a comparison can report; one matched test can have several. Other values may be added in later releases."
+        },
+        "DeclaredAt": {
+          "properties": {
+            "columnStart": {
+              "description": "In UTF-16 code units.",
+              "minimum": 1,
+              "type": "integer"
+            },
+            "lineStart": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "relativeFilePath": {
+              "description": "The helper's file, from the project root.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "relativeFilePath",
+            "lineStart",
+            "columnStart"
+          ],
+          "type": "object"
+        },
+        "Framework": {
+          "anyOf": [
+            {
+              "enum": [
+                "playwright",
+                "vitest",
+                "jest",
+                "mocha",
+                "jasmine",
+                "cypress",
+                "webdriverio",
+                "node",
+                "bun"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "HookCounts": {
+          "description": "How many hooks of each kind are registered, including by helper functions called there.",
+          "properties": {
+            "afterAll": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "afterEach": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "aroundAll": {
+              "description": "Vitest only.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "aroundEach": {
+              "description": "Vitest only.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "beforeAll": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "beforeEach": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "beforeAll",
+            "beforeEach",
+            "afterEach",
+            "afterAll",
+            "aroundEach",
+            "aroundAll"
+          ],
+          "type": "object"
+        },
+        "MatchMethod": {
+          "anyOf": [
+            {
+              "enum": [
+                "id",
+                "bodyHash",
+                "bodyHashAndFile",
+                "bodyHashAndSuite",
+                "bodyHashAndDependencies"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The evidence that two records identify the same test; null for an addition or removal. Other values may be added in later releases."
+        },
+        "MetaValue": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "items": {
+                "$ref": "#/definitions/MetaValue"
+              },
+              "type": "array"
+            },
+            {
+              "additionalProperties": {
+                "$ref": "#/definitions/MetaValue"
+              },
+              "type": "object"
+            }
+          ]
+        },
+        "SettingSource": {
+          "anyOf": [
+            {
+              "enum": [
+                "test",
+                "suite",
+                "file",
+                "config"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Where a test's run setting comes from: the test, a describe around it, the file, or the config its file uses. Other values may be added in later releases."
+        },
+        "StateSource": {
+          "anyOf": [
+            {
+              "enum": [
+                "test",
+                "suite",
+                "file",
+                "config"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Where a test's state is set: on the test, on a describe around it, at file level, or by a Vitest tag the config defines. Other values may be added in later releases."
+        },
+        "Step": {
+          "properties": {
+            "depth": {
+              "description": "0 for a step directly in the test, 1 for a step inside it, and so on.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "hasDynamicTitle": {
+              "type": "boolean"
+            },
+            "isSkipped": {
+              "description": "Declared with `test.step.skip()`.",
+              "type": "boolean"
+            },
+            "lineStart": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "title": {
+              "description": "The title, or its source text when it can't be worked out.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "title",
+            "hasDynamicTitle",
+            "lineStart",
+            "depth",
+            "isSkipped"
+          ],
+          "type": "object"
+        },
+        "TestChange": {
+          "anyOf": [
+            {
+              "properties": {
+                "after": {
+                  "$ref": "#/definitions/TestRecord"
+                },
+                "before": {
+                  "$ref": "#/definitions/TestRecord"
+                },
+                "changedFields": {
+                  "description": "Changed record keys, excluding locations and ids. Hashes are included only when comparable.",
+                  "items": {
+                    "enum": [
+                      "id",
+                      "bodyHash",
+                      "dependencyHash",
+                      "dependencies",
+                      "hasUnfollowedDependencies",
+                      "suiteId",
+                      "parentTestId",
+                      "suitePath",
+                      "relativeFilePath",
+                      "fileName",
+                      "lineStart",
+                      "lineEnd",
+                      "columnStart",
+                      "columnEnd",
+                      "declaredAt",
+                      "title",
+                      "titleWithoutTags",
+                      "hasDynamicTitle",
+                      "fullName",
+                      "isTypeTest",
+                      "state",
+                      "isActive",
+                      "isSkipped",
+                      "isFixme",
+                      "isTodo",
+                      "isExpectedToFail",
+                      "isNotLoaded",
+                      "isOnly",
+                      "isConditional",
+                      "condition",
+                      "reason",
+                      "hasDynamicReason",
+                      "stateSource",
+                      "stateLine",
+                      "isParallel",
+                      "isSerial",
+                      "tags",
+                      "annotations",
+                      "comments",
+                      "locks",
+                      "meta",
+                      "hooks",
+                      "timeout",
+                      "isSlow",
+                      "slowCondition",
+                      "retries",
+                      "retryDelay",
+                      "retryCondition",
+                      "repeats",
+                      "timeoutSource",
+                      "retriesSource",
+                      "repeatsSource",
+                      "timeoutConfigText",
+                      "retriesConfigText",
+                      "repeatsConfigText",
+                      "fixtures",
+                      "expectCount",
+                      "expectedAssertions",
+                      "expectsAssertions",
+                      "hasEmptyBody",
+                      "steps",
+                      "isBenchmark",
+                      "isParameterized",
+                      "caseCount",
+                      "caseIndex",
+                      "isInLoop",
+                      "isInCondition",
+                      "isInFunction",
+                      "projects"
+                    ],
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "kinds": {
+                  "items": {
+                    "$ref": "#/definitions/ChangeKind"
+                  },
+                  "type": "array"
+                },
+                "match": {
+                  "$ref": "#/definitions/MatchMethod"
+                }
+              },
+              "required": [
+                "after",
+                "before",
+                "changedFields",
+                "kinds",
+                "match"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "after": {
+                  "type": "null"
+                },
+                "before": {
+                  "$ref": "#/definitions/TestRecord"
+                },
+                "changedFields": {
+                  "description": "Changed record keys, excluding locations and ids. Hashes are included only when comparable.",
+                  "items": {
+                    "enum": [
+                      "id",
+                      "bodyHash",
+                      "dependencyHash",
+                      "dependencies",
+                      "hasUnfollowedDependencies",
+                      "suiteId",
+                      "parentTestId",
+                      "suitePath",
+                      "relativeFilePath",
+                      "fileName",
+                      "lineStart",
+                      "lineEnd",
+                      "columnStart",
+                      "columnEnd",
+                      "declaredAt",
+                      "title",
+                      "titleWithoutTags",
+                      "hasDynamicTitle",
+                      "fullName",
+                      "isTypeTest",
+                      "state",
+                      "isActive",
+                      "isSkipped",
+                      "isFixme",
+                      "isTodo",
+                      "isExpectedToFail",
+                      "isNotLoaded",
+                      "isOnly",
+                      "isConditional",
+                      "condition",
+                      "reason",
+                      "hasDynamicReason",
+                      "stateSource",
+                      "stateLine",
+                      "isParallel",
+                      "isSerial",
+                      "tags",
+                      "annotations",
+                      "comments",
+                      "locks",
+                      "meta",
+                      "hooks",
+                      "timeout",
+                      "isSlow",
+                      "slowCondition",
+                      "retries",
+                      "retryDelay",
+                      "retryCondition",
+                      "repeats",
+                      "timeoutSource",
+                      "retriesSource",
+                      "repeatsSource",
+                      "timeoutConfigText",
+                      "retriesConfigText",
+                      "repeatsConfigText",
+                      "fixtures",
+                      "expectCount",
+                      "expectedAssertions",
+                      "expectsAssertions",
+                      "hasEmptyBody",
+                      "steps",
+                      "isBenchmark",
+                      "isParameterized",
+                      "caseCount",
+                      "caseIndex",
+                      "isInLoop",
+                      "isInCondition",
+                      "isInFunction",
+                      "projects"
+                    ],
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "kinds": {
+                  "items": {
+                    "$ref": "#/definitions/ChangeKind"
+                  },
+                  "type": "array"
+                },
+                "match": {
+                  "type": "null"
+                }
+              },
+              "required": [
+                "after",
+                "before",
+                "changedFields",
+                "kinds",
+                "match"
+              ],
+              "type": "object"
+            },
+            {
+              "properties": {
+                "after": {
+                  "$ref": "#/definitions/TestRecord"
+                },
+                "before": {
+                  "type": "null"
+                },
+                "changedFields": {
+                  "description": "Changed record keys, excluding locations and ids. Hashes are included only when comparable.",
+                  "items": {
+                    "enum": [
+                      "id",
+                      "bodyHash",
+                      "dependencyHash",
+                      "dependencies",
+                      "hasUnfollowedDependencies",
+                      "suiteId",
+                      "parentTestId",
+                      "suitePath",
+                      "relativeFilePath",
+                      "fileName",
+                      "lineStart",
+                      "lineEnd",
+                      "columnStart",
+                      "columnEnd",
+                      "declaredAt",
+                      "title",
+                      "titleWithoutTags",
+                      "hasDynamicTitle",
+                      "fullName",
+                      "isTypeTest",
+                      "state",
+                      "isActive",
+                      "isSkipped",
+                      "isFixme",
+                      "isTodo",
+                      "isExpectedToFail",
+                      "isNotLoaded",
+                      "isOnly",
+                      "isConditional",
+                      "condition",
+                      "reason",
+                      "hasDynamicReason",
+                      "stateSource",
+                      "stateLine",
+                      "isParallel",
+                      "isSerial",
+                      "tags",
+                      "annotations",
+                      "comments",
+                      "locks",
+                      "meta",
+                      "hooks",
+                      "timeout",
+                      "isSlow",
+                      "slowCondition",
+                      "retries",
+                      "retryDelay",
+                      "retryCondition",
+                      "repeats",
+                      "timeoutSource",
+                      "retriesSource",
+                      "repeatsSource",
+                      "timeoutConfigText",
+                      "retriesConfigText",
+                      "repeatsConfigText",
+                      "fixtures",
+                      "expectCount",
+                      "expectedAssertions",
+                      "expectsAssertions",
+                      "hasEmptyBody",
+                      "steps",
+                      "isBenchmark",
+                      "isParameterized",
+                      "caseCount",
+                      "caseIndex",
+                      "isInLoop",
+                      "isInCondition",
+                      "isInFunction",
+                      "projects"
+                    ],
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                "kinds": {
+                  "items": {
+                    "$ref": "#/definitions/ChangeKind"
+                  },
+                  "type": "array"
+                },
+                "match": {
+                  "type": "null"
+                }
+              },
+              "required": [
+                "after",
+                "before",
+                "changedFields",
+                "kinds",
+                "match"
+              ],
+              "type": "object"
+            }
+          ],
+          "description": "One addition, removal or changed test. Locations and records come from the saved scans unchanged."
+        },
+        "TestRecord": {
+          "description": "A test, with the effective values the runner applies, including those inherited from its describes.",
+          "properties": {
+            "annotations": {
+              "items": {
+                "$ref": "#/definitions/Annotation"
+              },
+              "type": "array"
+            },
+            "bodyHash": {
+              "anyOf": [
+                {
+                  "pattern": "^[0-9a-f]{16}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Hash of the test body, ignoring whitespace and comments; null when the test has no body."
+            },
+            "caseCount": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "How many times the runner repeats the test: the cases of its own table times those of each describe table and the passes of each loop around it. Null when the scan can't work out a table or a loop's values, or the test is neither parameterized nor in a loop."
+            },
+            "caseIndex": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "With `expandCases`, which case of its own table, or pass of the innermost loop around it inside its describe, the test is, from 0, as Vitest's `%#` counts; null without `expandCases`, or when the test isn't one of several. The case of a describe table or loop around the describe is the describe's `caseIndex`."
+            },
+            "columnEnd": {
+              "description": "In UTF-16 code units.",
+              "minimum": 1,
+              "type": "integer"
+            },
+            "columnStart": {
+              "description": "In UTF-16 code units.",
+              "minimum": 1,
+              "type": "integer"
+            },
+            "comments": {
+              "description": "Comment lines directly above the test. By default only filled for tests that are not active.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "condition": {
+              "description": "Source text of the condition, shortened when long; null when unconditional.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "declaredAt": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/DeclaredAt"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Where a helper imported from another file writes the test; the record's location is then the call that registers it. Null for code written in the scanned file."
+            },
+            "dependencies": {
+              "description": "The files that went into `dependencyHash`, the test's own included, sorted, with `/` separators.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "dependencyHash": {
+              "description": "Hash of everything the test runs in the project: its call, the hooks, options and code of the file and of every describe around it, and the functions, classes, constants and modules these use, followed through imports. Ignores whitespace and comments. Installed packages are not in it.",
+              "pattern": "^[0-9a-f]{16}$",
+              "type": "string"
+            },
+            "expectCount": {
+              "description": "Calls of `expect()`, `expect.soft()` and `expect.poll()` written in the body, each counted once.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "expectedAssertions": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Vitest `expect.assertions(n)` in the body."
+            },
+            "expectsAssertions": {
+              "description": "Vitest `expect.hasAssertions()` in the body.",
+              "type": "boolean"
+            },
+            "fileName": {
+              "type": "string"
+            },
+            "fixtures": {
+              "description": "Names the test function takes from its context, then those of the `beforeEach`, `afterEach` and `aroundEach` hooks around it, once each. Vitest's own context keys, such as `expect` and `task`, are left out.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "fullName": {
+              "description": "`suitePath` and `title` joined with \" > \".",
+              "type": "string"
+            },
+            "hasDynamicReason": {
+              "description": "The reason could not be worked out to a string, so `reason` holds its source text.",
+              "type": "boolean"
+            },
+            "hasDynamicTitle": {
+              "description": "The title could not be resolved to a fixed string, so `title` holds its source text.",
+              "type": "boolean"
+            },
+            "hasEmptyBody": {
+              "description": "The test function has no statements, comments aside.",
+              "type": "boolean"
+            },
+            "hasUnfollowedDependencies": {
+              "description": "Something the test reaches couldn't be followed, so a change there doesn't change `dependencyHash`.",
+              "type": "boolean"
+            },
+            "hooks": {
+              "$ref": "#/definitions/HookCounts",
+              "description": "Every hook that runs around the test: those of the file and of each describe around it."
+            },
+            "id": {
+              "description": "Derived from the file path, the describe titles, the title and its position among tests with the same title.",
+              "pattern": "^[0-9a-f]{16}$",
+              "type": "string"
+            },
+            "isActive": {
+              "type": "boolean"
+            },
+            "isBenchmark": {
+              "description": "Vitest 5 benchmark: in a benchmark file, or using the `bench` fixture. Plain `vitest` doesn't run it.",
+              "type": "boolean"
+            },
+            "isConditional": {
+              "description": "The state applies only when a condition holds, as with `test.skip(condition)` or `skipIf`.",
+              "type": "boolean"
+            },
+            "isExpectedToFail": {
+              "type": "boolean"
+            },
+            "isFixme": {
+              "type": "boolean"
+            },
+            "isInCondition": {
+              "description": "Declared inside `if`, `?:`, `&&`, `switch` or a `catch` block.",
+              "type": "boolean"
+            },
+            "isInFunction": {
+              "description": "Declared inside a plain function.",
+              "type": "boolean"
+            },
+            "isInLoop": {
+              "description": "Declared inside a loop, `forEach` or `map`.",
+              "type": "boolean"
+            },
+            "isNotLoaded": {
+              "description": "The runner did not load this test, possibly because its describe failed; a diagnostic at `stateLine` says why.",
+              "type": "boolean"
+            },
+            "isOnly": {
+              "description": "The test is selected by a `.only`, following the runner's focus rules.",
+              "type": "boolean"
+            },
+            "isParallel": {
+              "description": "Both `isParallel` and `isSerial` false means the framework's default mode.",
+              "type": "boolean"
+            },
+            "isParameterized": {
+              "description": "Declared with `.each` or `.for`, or inside a describe declared with them, so the runner repeats it.",
+              "type": "boolean"
+            },
+            "isSerial": {
+              "type": "boolean"
+            },
+            "isSkipped": {
+              "type": "boolean"
+            },
+            "isSlow": {
+              "description": "Playwright `test.slow()` applies: the runner triples the timeout.",
+              "type": "boolean"
+            },
+            "isTodo": {
+              "type": "boolean"
+            },
+            "isTypeTest": {
+              "description": "Declared in a Vitest type test file (`*.test-d.ts`, `*.spec-d.ts`).",
+              "type": "boolean"
+            },
+            "lineEnd": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "lineStart": {
+              "minimum": 1,
+              "type": "integer"
+            },
+            "locks": {
+              "description": "From the test, its describes and the `test.describe.configure()` calls around it. Playwright only.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "meta": {
+              "anyOf": [
+                {
+                  "additionalProperties": {
+                    "$ref": "#/definitions/MetaValue"
+                  },
+                  "type": "object"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Merged from the describes and the test. Vitest only; literal values only."
+            },
+            "parentTestId": {
+              "anyOf": [
+                {
+                  "pattern": "^[0-9a-f]{16}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The test whose body declares this one as a subtest, which `node:test` runs while it runs that test; null for every other test."
+            },
+            "projects": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Names of the projects that run the test, of the config its file uses, after each project's files and Playwright's `grep` and `grepInvert`. `[]` when no project runs it; null when there is no config, or the scan can't tell."
+            },
+            "reason": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "relativeFilePath": {
+              "description": "Path from the project root, with `/` separators.",
+              "type": "string"
+            },
+            "repeats": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "How many times the runner runs the test again after the first run: Vitest's or Bun's `repeats`, or Playwright's `repeatEach` from the config less one."
+            },
+            "repeatsConfigText": {
+              "description": "The config's source text for `repeats`, Playwright's `repeatEach`, read as `timeoutConfigText` is.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "repeatsSource": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/SettingSource"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Where `repeats` comes from, read as `timeoutSource` is."
+            },
+            "retries": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "How many times the runner retries the test when it fails; null when the file sets none."
+            },
+            "retriesConfigText": {
+              "description": "The config's source text for `retries`, read as `timeoutConfigText` is.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "retriesSource": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/SettingSource"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Where `retries`, `retryDelay` and `retryCondition` come from, read as `timeoutSource` is."
+            },
+            "retryCondition": {
+              "description": "Vitest only: source text of the `retry` object's `condition`, a RegExp or a function.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "retryDelay": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Milliseconds between retries: Vitest's from the `retry` object (4.1), Jest's from `waitBeforeRetry` of `jest.retryTimes()` (30.0); null otherwise."
+            },
+            "slowCondition": {
+              "description": "Source text of the condition of the `test.slow()` that applies; null when unconditional or not slow.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "state": {
+              "$ref": "#/definitions/TestState"
+            },
+            "stateLine": {
+              "anyOf": [
+                {
+                  "minimum": 1,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The line that sets the state; null for active tests."
+            },
+            "stateSource": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/StateSource"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "null for active tests."
+            },
+            "steps": {
+              "description": "Playwright `test.step()` and `test.step.skip()` calls in the body, in source order.",
+              "items": {
+                "$ref": "#/definitions/Step"
+              },
+              "type": "array"
+            },
+            "suiteId": {
+              "anyOf": [
+                {
+                  "pattern": "^[0-9a-f]{16}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The nearest describe; null outside any describe."
+            },
+            "suitePath": {
+              "description": "Titles of the describes around the test, and of the tests a subtest is declared in, outermost first.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "tags": {
+              "description": "From the test and every describe around it, outermost first, without duplicates.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "timeout": {
+              "anyOf": [
+                {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "In milliseconds: the last `test.setTimeout()` in the body or a `beforeEach`, otherwise the nearest describe or file that sets one, otherwise the config. Null when none sets it, so the runner's default applies."
+            },
+            "timeoutConfigText": {
+              "description": "The config's source text for `timeout` when the config sets it under a condition, as in `process.env.CI ? 60_000 : 30_000`, shortened when long; null otherwise.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "timeoutSource": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/SettingSource"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Where `timeout` comes from; null when nothing sets it. A null `timeout` from the config means the config sets it, but its projects set different values or the value depends on a condition, as in `process.env.CI ? 2 : 0`."
+            },
+            "title": {
+              "description": "As the runner shows it, tags included.",
+              "type": "string"
+            },
+            "titleWithoutTags": {
+              "description": "`title` with `@tag` words removed and spaces tidied.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "bodyHash",
+            "dependencyHash",
+            "dependencies",
+            "hasUnfollowedDependencies",
+            "suiteId",
+            "parentTestId",
+            "suitePath",
+            "relativeFilePath",
+            "fileName",
+            "lineStart",
+            "lineEnd",
+            "columnStart",
+            "columnEnd",
+            "declaredAt",
+            "title",
+            "titleWithoutTags",
+            "hasDynamicTitle",
+            "fullName",
+            "isTypeTest",
+            "state",
+            "isActive",
+            "isSkipped",
+            "isFixme",
+            "isTodo",
+            "isExpectedToFail",
+            "isNotLoaded",
+            "isOnly",
+            "isConditional",
+            "condition",
+            "reason",
+            "hasDynamicReason",
+            "stateSource",
+            "stateLine",
+            "isParallel",
+            "isSerial",
+            "tags",
+            "annotations",
+            "comments",
+            "locks",
+            "meta",
+            "hooks",
+            "timeout",
+            "isSlow",
+            "slowCondition",
+            "retries",
+            "retryDelay",
+            "retryCondition",
+            "repeats",
+            "timeoutSource",
+            "retriesSource",
+            "repeatsSource",
+            "timeoutConfigText",
+            "retriesConfigText",
+            "repeatsConfigText",
+            "fixtures",
+            "expectCount",
+            "expectedAssertions",
+            "expectsAssertions",
+            "hasEmptyBody",
+            "steps",
+            "isBenchmark",
+            "isParameterized",
+            "caseCount",
+            "caseIndex",
+            "isInLoop",
+            "isInCondition",
+            "isInFunction",
+            "projects"
+          ],
+          "type": "object"
+        },
+        "TestState": {
+          "anyOf": [
+            {
+              "enum": [
+                "active",
+                "skip",
+                "fixme",
+                "todo",
+                "expectedToFail",
+                "notLoaded"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "The state the runner applies to a test, after describes and file-level calls are taken into account. `notLoaded`: the runner refuses to load the file, so none of its tests run. Other values may be added in later releases."
+        },
+        "Tool": {
+          "properties": {
+            "name": {
+              "const": "test-inventory",
+              "type": "string"
+            },
+            "version": {
+              "description": "Version of test-inventory that produced the output.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "version"
+          ],
+          "type": "object"
+        }
+      },
+      "properties": {
+        "afterToolVersion": {
+          "type": "string"
+        },
+        "beforeToolVersion": {
+          "type": "string"
+        },
+        "changes": {
+          "items": {
+            "$ref": "#/definitions/TestChange"
+          },
+          "type": "array"
+        },
+        "framework": {
+          "$ref": "#/definitions/Framework"
+        },
+        "hashesComparable": {
+          "type": "boolean"
+        },
+        "hint": {
+          "anyOf": [
+            {
+              "description": "What to do next, when there is something to say.",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextCursor": {
+          "anyOf": [
+            {
+              "description": "Pass it as `cursor` for the next page; null on the last.",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "schemaVersion": {
+          "const": 1,
+          "type": "integer"
+        },
+        "summary": {
+          "description": "Category counts overlap; changed counts matched tests, while unchanged counts matches with no changes.",
+          "properties": {
+            "added": {
+              "type": "number"
+            },
+            "bodyChanged": {
+              "type": "number"
+            },
+            "changed": {
+              "type": "number"
+            },
+            "dependenciesChanged": {
+              "type": "number"
+            },
+            "metadataChanged": {
+              "type": "number"
+            },
+            "moved": {
+              "type": "number"
+            },
+            "newlySkipped": {
+              "type": "number"
+            },
+            "reEnabled": {
+              "type": "number"
+            },
+            "removed": {
+              "type": "number"
+            },
+            "renamed": {
+              "type": "number"
+            },
+            "stateChanged": {
+              "type": "number"
+            },
+            "tagsChanged": {
+              "type": "number"
+            },
+            "unchanged": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "added",
+            "removed",
+            "moved",
+            "renamed",
+            "bodyChanged",
+            "dependenciesChanged",
+            "newlySkipped",
+            "reEnabled",
+            "stateChanged",
+            "tagsChanged",
+            "metadataChanged",
+            "changed",
+            "unchanged"
+          ],
+          "type": "object"
+        },
+        "tool": {
+          "$ref": "#/definitions/Tool"
+        },
+        "total": {
+          "description": "All matching items, on every page.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "warnings": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "tool",
+        "framework",
+        "beforeToolVersion",
+        "afterToolVersion",
+        "hashesComparable",
+        "summary",
+        "changes",
+        "warnings",
+        "total",
+        "nextCursor",
+        "hint"
+      ],
+      "type": "object"
+    },
+    "title": "Diff inventories"
   }
 ]

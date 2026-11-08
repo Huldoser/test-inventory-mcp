@@ -16,7 +16,7 @@ it, the one the project uses. Globs pick the files instead, as on test-inventory
 **Claude Code**, in the project folder. `--scope project` writes `.mcp.json`, for everyone who works on the project:
 
 ```sh
-claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.7 --framework playwright
+claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.8 --framework playwright
 ```
 
 **Cursor**, in `.cursor/mcp.json`:
@@ -26,7 +26,7 @@ claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.7 -
   "mcpServers": {
     "test-inventory": {
       "command": "npx",
-      "args": ["-y", "test-inventory-mcp@0.7", "--framework", "playwright"]
+      "args": ["-y", "test-inventory-mcp@0.8", "--framework", "playwright"]
     }
   }
 }
@@ -40,7 +40,7 @@ claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.7 -
     "test-inventory": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "test-inventory-mcp@0.7", "--framework", "playwright"]
+      "args": ["-y", "test-inventory-mcp@0.8", "--framework", "playwright"]
     }
   }
 }
@@ -95,11 +95,21 @@ Answers are JSON, sent both as structured content and as text. Lists come 50 ite
 `scanErrors` counts the problems that may leave tests out, and `hint` says what to do next when there is something to
 say.
 
+### Compare saved inventories
+
+`diff_inventories` takes `before` and `after`, paths to complete saved JSON inventories inside the project, plus
+`limit` and `cursor`. It returns paged `changes` with original records and matching evidence, the full `summary`,
+`total`, `nextCursor`, `hashesComparable`, `warnings` and `hint`. It does not scan or write files. Use the same
+framework, root, patterns, filters and `expandCases` setting for both scans. Hash comparisons and rename matching
+need the exact same core version. Incomplete scans produce warnings. Zero changes returns an empty page and a hint.
+Each saved file must be a regular file of at most 128 MiB. Save scans with the core CLI, without `--fields` or
+`--format jsonl`; see [inventory diffs](https://huldoser.github.io/test-inventory/guide/diff).
+
 ## Security
 
 The server reads the test files its globs match inside the project, or without globs those the configs run, and,
 for Vitest, the files that symbolic links among them point to, as Vitest does. It reads the configs as code, without
-running them. It refuses a `directory` or pattern that reaches outside the project. It runs no code from the project, writes no files, and opens no network connections.
+running them. It refuses a `directory` or pattern that reaches outside the project, and refuses scan answers whose test files, configs or dependencies resolve outside it. Saved inventories must resolve inside the project too. The scanner may read a linked file before the answer is refused; this boundary is not a filesystem sandbox. It runs no code from the project, writes no files, and opens no network connections.
 
 Answers hold text from the project's files, such as test titles, skip reasons and comments. A client should treat it
 as content of that project, not as instructions. To report a vulnerability, see [SECURITY.md](SECURITY.md).
@@ -107,7 +117,7 @@ as content of that project, not as instructions. To report a vulnerability, see 
 ## Versioning
 
 Tool names, their arguments and their answers are the server's API. Before 1.0, a change that breaks them raises the
-minor version, so `test-inventory-mcp@0.7` in the setup above gets fixes only.
+minor version, so `test-inventory-mcp@0.8` in the setup above gets fixes only.
 
 ## License
 

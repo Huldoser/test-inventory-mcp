@@ -26,9 +26,15 @@ describe.each(['2026-07-28', '2025-11-25'] as Era[])('a client of the %s revisio
   });
   afterEach(() => connection.close());
 
-  it('gets the four tools, read-only, as recorded in tests/golden/tools.json', async () => {
+  it('gets the five tools, read-only, as recorded in tests/golden/tools.json', async () => {
     const { tools } = await connection.client.listTools();
-    expect(tools.map((tool) => tool.name)).toEqual(['test_summary', 'find_tests', 'get_tests', 'scan_diagnostics']);
+    expect(tools.map((tool) => tool.name)).toEqual([
+      'test_summary',
+      'find_tests',
+      'get_tests',
+      'scan_diagnostics',
+      'diff_inventories',
+    ]);
     for (const tool of tools) {
       expect(tool.annotations).toMatchObject({ readOnlyHint: true, destructiveHint: false, openWorldHint: false });
     }

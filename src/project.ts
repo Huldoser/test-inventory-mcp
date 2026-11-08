@@ -20,6 +20,12 @@ export interface ScanArguments {
   expandCases?: boolean;
 }
 
+/** Containment by path components, including a filesystem root and Windows drive roots. */
+export function isInside(root: string, file: string): boolean {
+  const relative = path.relative(root, file);
+  return relative !== '..' && !relative.startsWith(`..${path.sep}`) && !path.isAbsolute(relative);
+}
+
 /**
  * A pattern from a tool call stays inside the folder it is scanned from: no absolute path and no `..`. On Windows a
  * backslash separates folders, and elsewhere it escapes the next character, so `.\./` is `../` to the glob; a pattern
@@ -64,7 +70,7 @@ async function directoryIn(root: string, directory: string): Promise<string> {
   } catch {
     throw new Error(`The directory "${directory}" does not exist in the project.`);
   }
-  if (real !== root && !real.startsWith(root + path.sep)) {
+  if (!isInside(root, real)) {
     throw new Error(
       `The directory "${directory}" is outside the project. Pass a folder inside it, relative to the project root.`,
     );
@@ -82,7 +88,25 @@ export async function scanProject(config: ServerConfig, args: ScanArguments, sig
   const root = args.directory === undefined ? config.root : await directoryIn(config.root, args.directory);
   const patterns = args.patterns ?? (config.patterns.length > 0 ? config.patterns : undefined);
   try {
-    return await scan({ root, patterns, framework, expandCases: args.expandCases, signal });
+    const inventory = await scan({ root, patterns, framework, expandCases: args.expandCases, signal });
+    const files = new Set([
+      ...inventory.files.map((file) => file.relativeFilePath),
+      ...inventory.configs.map((file) => file.relativeFilePath),
+      ...inventory.tests.flatMap((test) => test.dependencies),
+    ]);
+    for (const file of files) {
+      signal?.throwIfAborted();
+      const named = path.resolve(root, file);
+      // Missing dependencies already have scan diagnostics; no code from them can be in the answer.
+      const real = await realpath(named).catch(() => named);
+      if (!isInside(config.root, real)) {
+        throw new Error(
+          'The scan reaches a file outside the project, through a link or an import. ' +
+            'Pass patterns for files and dependencies inside the project, or start the server at their shared parent.',
+        );
+      }
+    }
+    return inventory;
   } catch (error) {
     // A request the client cancelled stops the scan, with the reason the client gave.
     if (signal?.aborted) throw error;
