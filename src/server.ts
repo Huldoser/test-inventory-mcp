@@ -252,7 +252,7 @@ export function createServer(config: ServerConfig): McpServer {
         'the counts of each, sorted by name and paged with limit and cursor; a test with no tag is in no tag group, ' +
         'and one whose projects the scan cannot tell in no project group. configs lists the config files read and ' +
         'their projects. Example: {"states": ["skip", "fixme"], "groupBy": "file"}.',
-      inputSchema: z.object({
+      inputSchema: z.strictObject({
         ...scanArguments,
         ...testFilters,
         groupBy: z
@@ -346,7 +346,7 @@ export function createServer(config: ServerConfig): McpServer {
         'Filters combine with AND; a list matches ' +
         'any of its values. fields picks other keys of the test records (id is always there). Answers are paged: ' +
         'follow nextCursor, or narrow the filters. Example: {"states": ["skip"], "withoutReason": true}.',
-      inputSchema: z.object({
+      inputSchema: z.strictObject({
         ...scanArguments,
         ...testFilters,
         projects: z
@@ -432,7 +432,7 @@ export function createServer(config: ServerConfig): McpServer {
         'title, describe or file changes; ids not in the current scan are returned in notFound. Example: ' +
         '{"ids": ["3f9a0c1d2e4b5a69"]}. An answer that would be too long returns the first tests and the other ids in ' +
         'remaining.',
-      inputSchema: z.object({
+      inputSchema: z.strictObject({
         ...scanArguments,
         ids: z.array(z.string().min(1)).min(1).max(20).describe('Test ids, as find_tests returns them.'),
       }),
@@ -509,7 +509,7 @@ export function createServer(config: ServerConfig): McpServer {
         'at run time, a file no config runs). They are ' +
         'about reading the code, not test failures. Use it when another tool reports scanErrors, or to check why a ' +
         'test is missing or notLoaded. Answers are paged: follow nextCursor. Example: {"levels": ["error"]}.',
-      inputSchema: z.object({
+      inputSchema: z.strictObject({
         ...scanArguments,
         levels: z.array(z.enum(DIAGNOSTIC_LEVELS)).min(1).optional().describe('Keeps problems of these levels.'),
         codes: z.array(z.enum(DIAGNOSTIC_CODES)).min(1).optional().describe('Keeps problems with these codes.'),
@@ -568,7 +568,7 @@ export function createServer(config: ServerConfig): McpServer {
         'Use the same framework, root, patterns, filters and expandCases for both saved scans. Hash comparisons and rename matching ' +
         'are disabled across tool versions. Follow nextCursor for more changes. For Playwright, Vitest, Jest, Mocha, Jasmine, ' +
         'Cypress, WebdriverIO, node:test and Bun inventories. Example: {"before":"inventories/base.json","after":"inventories/head.json"}.',
-      inputSchema: z.object({
+      inputSchema: z.strictObject({
         before: z
           .string()
           .min(1)
