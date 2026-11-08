@@ -79,13 +79,17 @@ describe('what a tool call scans', () => {
   });
   it('keeps a completed scan when a source file disappears before the boundary check', async () => {
     const original = (await vi.importActual<typeof filesystem>('node:fs/promises')).realpath;
+    const canonical = await original(root);
     const spy = vi.spyOn(filesystem, 'realpath').mockImplementation(async (file, options) => {
       if (String(file).endsWith('stop-loss.spec.ts'))
         throw Object.assign(new Error('removed after scan'), { code: 'ENOENT' });
       return original(file, options as never);
     });
     try {
-      const inventory = await scanProject({ root, framework: 'playwright', patterns: ['tests/stop-loss.spec.ts'] }, {});
+      const inventory = await scanProject(
+        { root: canonical, framework: 'playwright', patterns: ['tests/stop-loss.spec.ts'] },
+        {},
+      );
       expect(inventory.tests).toHaveLength(1);
     } finally {
       spy.mockRestore();
