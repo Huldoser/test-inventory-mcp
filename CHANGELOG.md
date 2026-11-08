@@ -1,5 +1,26 @@
 # test-inventory-mcp
 
+## 0.8.0
+
+### Minor Changes
+
+- [#33](https://github.com/Huldoser/test-inventory-mcp/pull/33) [`b7e05ef`](https://github.com/Huldoser/test-inventory-mcp/commit/b7e05efba204ba11687481f7d4567810b512c24b) - Add diff_inventories to compare complete saved JSON scans inside the project. It pages changes with their original
+  records and matching evidence, counts change categories, and warns about incomparable hashes or incomplete scans.
+  Saved files must resolve inside the project and be regular files no larger than 128 MiB.
+
+  Require test-inventory 0.10.0 for the diff API and its config, dependency, focus and failure-scope fixes.
+
+### Patch Changes
+
+- [#33](https://github.com/Huldoser/test-inventory-mcp/pull/33) [`b7e05ef`](https://github.com/Huldoser/test-inventory-mcp/commit/b7e05efba204ba11687481f7d4567810b512c24b) - Reject a cursor that points before or beyond the remaining results, rather than repeating or silently omitting tests.
+
+- [#33](https://github.com/Huldoser/test-inventory-mcp/pull/33) [`b7e05ef`](https://github.com/Huldoser/test-inventory-mcp/commit/b7e05efba204ba11687481f7d4567810b512c24b) - Allow subdirectories and saved inventories when the configured project root is a filesystem root, including a
+  Windows drive root. The old prefix check incorrectly classified its children as outside the project.
+
+- [#33](https://github.com/Huldoser/test-inventory-mcp/pull/33) [`b7e05ef`](https://github.com/Huldoser/test-inventory-mcp/commit/b7e05efba204ba11687481f7d4567810b512c24b) - Refuse scan answers when test files, configs or dependencies resolve outside the project, including through symbolic
+  links. Start the server at the shared parent when both locations belong to the intended project. Scanning may read a
+  linked file before this answer check; the boundary is not a filesystem sandbox.
+
 ## 0.7.1
 
 ### Patch Changes
