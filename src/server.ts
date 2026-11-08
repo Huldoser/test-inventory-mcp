@@ -188,12 +188,17 @@ function hints(...parts: (string | null)[]): string | null {
 }
 
 /** Filters the tests of a scan of `directory`, with changed files named from the project root. */
-function filterTests(inventory: Inventory, filter: InventoryFilter, directory: string | undefined): Inventory {
+async function filterTests(
+  inventory: Inventory,
+  filter: InventoryFilter,
+  root: string,
+  directory: string | undefined,
+): Promise<Inventory> {
   const { related, ...rest } = filter;
   try {
     return filterInventory(
       inventory,
-      related === undefined ? rest : { ...rest, related: relatedIn(directory, related) },
+      related === undefined ? rest : { ...rest, related: await relatedIn(root, directory, related) },
     );
   } catch (error) {
     // test-inventory throws a TypeError for a filter it rejects, such as a grep that isn't a regular expression.
@@ -298,7 +303,7 @@ export function createServer(config: ServerConfig): McpServer {
     ({ states, tags, grep, related, groupBy, limit, cursor, ...scan }, { mcpReq: { signal } }) =>
       answer(async () => {
         const inventory = await scanProject(config, scan, signal);
-        const matched = filterTests(inventory, { states, tags, grep, related }, scan.directory);
+        const matched = await filterTests(inventory, { states, tags, grep, related }, config.root, scan.directory);
         const base = { ...scanOutput(inventory), summary: matched.summary, configs: inventory.configs };
         if (groupBy === undefined) {
           return {
@@ -387,7 +392,12 @@ export function createServer(config: ServerConfig): McpServer {
     ) =>
       answer(async () => {
         const inventory = await scanProject(config, scan, signal);
-        const matched = filterTests(inventory, { states, tags, grep, related, only, withoutReason }, scan.directory);
+        const matched = await filterTests(
+          inventory,
+          { states, tags, grep, related, only, withoutReason },
+          config.root,
+          scan.directory,
+        );
         const run = projects
           ? matched.tests.filter((test) => test.projects?.some((name) => projects.includes(name)))
           : matched.tests;

@@ -17,6 +17,8 @@ let connection: Connection;
 
 beforeAll(async () => {
   mkdirSync(path.join(root, 'tests'), { recursive: true });
+  mkdirSync(path.join(root, 'pages'));
+  writeFileSync(path.join(root, 'pages', 'order-ticket.ts'), 'export const stopPrice = () => 187.25;');
   mkdirSync(path.join(work, 'outside'));
   writeFileSync(
     path.join(work, 'outside', 'quotes.test.ts'),
@@ -24,7 +26,7 @@ beforeAll(async () => {
   );
   writeFileSync(
     path.join(root, 'tests', 'stop-loss.spec.ts'),
-    "import { test } from '@playwright/test';\n\ntest('triggers a stop-loss order at the stop price', async () => {});\n",
+    "import { test } from '@playwright/test';\nimport { stopPrice } from '../pages/order-ticket.ts';\ntest('triggers a stop-loss order at the stop price', async () => { stopPrice(); });\n",
   );
   writeFileSync(
     path.join(root, 'tests', 'trailing-stop.spec.ts'),
@@ -36,6 +38,7 @@ beforeAll(async () => {
   );
   // A junction needs no extra rights on Windows; elsewhere the type is ignored.
   symlinkSync(path.join(work, 'outside'), path.join(root, 'shared'), 'junction');
+  symlinkSync(path.join(root, 'tests'), path.join(root, 'order-tests'), 'junction');
   const command = parseCommandLine(['tests/**/*.spec.ts', '--framework', 'playwright', '--root', root], {}, work);
   if (!('config' in command)) throw new Error(command.text);
   connection = await connect(command.config);
@@ -47,6 +50,22 @@ afterAll(async () => {
 });
 
 describe('what a tool call scans', () => {
+  it.each(['tests', 'order-tests', path.join(root, 'tests')])(
+    'keeps tests affected by a helper outside the scanned folder %s',
+    async (directory) => {
+      const args = { directory, patterns: ['stop-loss.spec.ts'], related: ['pages/order-ticket.ts'] };
+      expect(await call(connection.client, 'find_tests', args)).toMatchObject({ total: 1 });
+      expect(await call(connection.client, 'test_summary', args)).toMatchObject({ summary: { testCount: 1 } });
+    },
+  );
+  it.each(['order-tests', path.join(root, 'tests')])(
+    'keeps changed tests when the scanned directory is %s',
+    async (directory) => {
+      const args = { directory, patterns: ['stop-loss.spec.ts'], related: ['tests/stop-loss.spec.ts'] };
+      expect(await call(connection.client, 'find_tests', args)).toMatchObject({ total: 1 });
+      expect(await call(connection.client, 'test_summary', args)).toMatchObject({ summary: { testCount: 1 } });
+    },
+  );
   it('accepts a project subdirectory when the configured root is a filesystem root', async () => {
     const volume = path.parse(root).root;
     const inventory = await scanProject(
@@ -59,14 +78,18 @@ describe('what a tool call scans', () => {
     expect(inventory.tests).toHaveLength(1);
   });
   it('keeps a completed scan when a source file disappears before the boundary check', async () => {
-    const original = filesystem.realpath;
+    const original = (await vi.importActual<typeof filesystem>('node:fs/promises')).realpath;
+    const canonical = await original(root);
     const spy = vi.spyOn(filesystem, 'realpath').mockImplementation(async (file, options) => {
       if (String(file).endsWith('stop-loss.spec.ts'))
         throw Object.assign(new Error('removed after scan'), { code: 'ENOENT' });
       return original(file, options as never);
     });
     try {
-      const inventory = await scanProject({ root, framework: 'playwright', patterns: ['tests/stop-loss.spec.ts'] }, {});
+      const inventory = await scanProject(
+        { root: canonical, framework: 'playwright', patterns: ['tests/stop-loss.spec.ts'] },
+        {},
+      );
       expect(inventory.tests).toHaveLength(1);
     } finally {
       spy.mockRestore();
@@ -131,6 +154,10 @@ describe('what a tool call scans', () => {
       '/etc/**',
       'C:\\Users\\**',
       '..\\**',
+      '{../pages,.}/*.spec.ts',
+      '{..,.}/pages/*.spec.ts',
+      '@(../pages|tests)/*.spec.ts',
+      '{tests,{../pages,spec}}/*.spec.ts',
       // Outside Windows a backslash escapes the next character, so these are `../` and `/etc` to the glob.
       '.\\./outside/*.spec.ts',
       'tests/\\.\\./\\.\\./outside/*.ts',
@@ -159,13 +186,15 @@ describe('a cancelled tool call', () => {
 });
 
 describe('relatedIn', () => {
-  it('names changed files from the folder a call scans, and leaves out those outside it', () => {
-    expect(relatedIn(undefined, ['pages/order-ticket.ts', '.\\fixtures\\index.ts'])).toEqual([
+  it('names changed files from the folder a call scans, including helpers elsewhere in the project', async () => {
+    const canonical = await filesystem.realpath(root);
+    expect(await relatedIn(canonical, undefined, ['pages/order-ticket.ts', '.\\fixtures\\index.ts'])).toEqual([
       'pages/order-ticket.ts',
       'fixtures/index.ts',
     ]);
-    expect(relatedIn('apps/web', ['apps/web/pages/order-ticket.ts', 'apps/api/routes/orders.ts'])).toEqual([
-      'pages/order-ticket.ts',
+    expect(await relatedIn(canonical, 'tests', ['tests/stop-loss.spec.ts', 'pages/order-ticket.ts'])).toEqual([
+      'stop-loss.spec.ts',
+      '../pages/order-ticket.ts',
     ]);
   });
 });
