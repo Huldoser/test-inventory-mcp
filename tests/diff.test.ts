@@ -1,4 +1,4 @@
-import { mkdtempSync, mkdirSync, rmSync, symlinkSync, truncateSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, realpathSync, rmSync, symlinkSync, truncateSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { scanSource } from 'test-inventory';
@@ -6,7 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { MAX_INVENTORY_BYTES, readInventory } from '../src/saved-inventory.ts';
 import { call, callError, connect, type Connection } from './helpers.ts';
 
-const work = mkdtempSync(path.join(tmpdir(), 'inventory-diff-'));
+const work = realpathSync(mkdtempSync(path.join(tmpdir(), 'inventory-diff-')));
 const root = path.join(work, 'desk');
 let connection: Connection;
 const code = `import { test, expect } from 'vitest';
