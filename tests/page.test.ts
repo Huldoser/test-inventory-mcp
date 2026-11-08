@@ -23,6 +23,15 @@ describe('paginate', () => {
     expect(JSON.stringify(oneMore).length).toBeGreaterThan(MAX_CHARACTERS);
   });
 
+  it('fits a complete last page when removing the cursor makes it smaller than an intermediate page', () => {
+    const overhead = JSON.stringify({ items: ['', '', ''], nextCursor: null }).length;
+    const items = ['x'.repeat(MAX_CHARACTERS - overhead), '', ''];
+    const answer = page(items, 3);
+    expect(answer.items).toHaveLength(3);
+    expect(answer.nextCursor).toBeNull();
+    expect(JSON.stringify(answer).length).toBe(MAX_CHARACTERS);
+  });
+
   it('returns one item alone when it is larger than the size limit', () => {
     const large = [
       { orderId: 'ORD-0001', note: 'x'.repeat(MAX_CHARACTERS) },

@@ -79,6 +79,7 @@ test-inventory-mcp [--framework <name>] [<glob...>] [--root <dir>]
 `related` takes the files a change touches, from the project root as `git diff --name-only` writes them, and keeps
 the tests whose `dependencies` include one of them, and those that reach code the scan can't follow, as
 test-inventory's [`--related`](https://huldoser.github.io/test-inventory/guide/cli#tests-a-change-can-affect) does.
+The filter uses the actual scanned folder when `directory` names an internal link or an absolute path inside the project.
 `dependencies` can list hundreds of files, so it isn't among the default `fields`, and `get_tests` returns as many
 tests as fit in one answer, with the other ids in `remaining`. An id stays the same when a test moves to another
 line, and changes when its title, describes or file change.
@@ -92,6 +93,7 @@ the same `expandCases` as the `find_tests` call the ids came from. Records have 
 
 Answers are JSON, sent both as structured content and as text. Lists come 50 items at a time (`limit` takes up to
 200), and an answer stays under about 30,000 characters; passing `nextCursor` back as `cursor` gets the next page.
+A single oversized record is returned alone. A final page can fit more records because it needs no next-page cursor or hint.
 `scanErrors` counts the problems that may leave tests out, and `hint` says what to do next when there is something to
 say.
 

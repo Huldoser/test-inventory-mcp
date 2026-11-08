@@ -65,6 +65,8 @@ export function paginate<T, Output>(
   // The largest page that fits; a single item is returned even when it alone is larger.
   let low = 1;
   let high = Math.max(1, Math.min(limit, items.length - offset));
+  // The final page loses its cursor and paging hint, so it can fit even when a smaller page doesn't.
+  if (fits(high)) return build(high);
   while (low < high) {
     const middle = Math.ceil((low + high) / 2);
     if (fits(middle)) low = middle;

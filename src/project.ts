@@ -49,8 +49,9 @@ function checkPattern(pattern: string): void {
  * Changed files from the project root, as `git diff --name-only` writes them, named as the scan of `directory` names
  * them: from that folder. A file outside it is in no dependency of the tests there, so it is left out.
  */
-export function relatedIn(directory: string | undefined, files: string[]): string[] {
-  const folder = directory === undefined ? '.' : path.posix.normalize(directory.replaceAll('\\', '/'));
+export async function relatedIn(root: string, directory: string | undefined, files: string[]): Promise<string[]> {
+  const real = directory === undefined ? root : await directoryIn(root, directory);
+  const folder = path.relative(root, real).split(path.sep).join('/');
   return files.flatMap((file) => {
     if (path.posix.isAbsolute(file) || path.win32.isAbsolute(file) || file.split(/[\\/]/).includes('..')) {
       throw new Error(

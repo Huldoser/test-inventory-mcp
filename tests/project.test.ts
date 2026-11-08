@@ -36,6 +36,7 @@ beforeAll(async () => {
   );
   // A junction needs no extra rights on Windows; elsewhere the type is ignored.
   symlinkSync(path.join(work, 'outside'), path.join(root, 'shared'), 'junction');
+  symlinkSync(path.join(root, 'tests'), path.join(root, 'order-tests'), 'junction');
   const command = parseCommandLine(['tests/**/*.spec.ts', '--framework', 'playwright', '--root', root], {}, work);
   if (!('config' in command)) throw new Error(command.text);
   connection = await connect(command.config);
@@ -47,6 +48,14 @@ afterAll(async () => {
 });
 
 describe('what a tool call scans', () => {
+  it.each(['order-tests', path.join(root, 'tests')])(
+    'keeps changed tests when the scanned directory is %s',
+    async (directory) => {
+      const args = { directory, patterns: ['stop-loss.spec.ts'], related: ['tests/stop-loss.spec.ts'] };
+      expect(await call(connection.client, 'find_tests', args)).toMatchObject({ total: 1 });
+      expect(await call(connection.client, 'test_summary', args)).toMatchObject({ summary: { testCount: 1 } });
+    },
+  );
   it('accepts a project subdirectory when the configured root is a filesystem root', async () => {
     const volume = path.parse(root).root;
     const inventory = await scanProject(
@@ -159,13 +168,14 @@ describe('a cancelled tool call', () => {
 });
 
 describe('relatedIn', () => {
-  it('names changed files from the folder a call scans, and leaves out those outside it', () => {
-    expect(relatedIn(undefined, ['pages/order-ticket.ts', '.\\fixtures\\index.ts'])).toEqual([
+  it('names changed files from the folder a call scans, and leaves out those outside it', async () => {
+    const canonical = await filesystem.realpath(root);
+    expect(await relatedIn(canonical, undefined, ['pages/order-ticket.ts', '.\\fixtures\\index.ts'])).toEqual([
       'pages/order-ticket.ts',
       'fixtures/index.ts',
     ]);
-    expect(relatedIn('apps/web', ['apps/web/pages/order-ticket.ts', 'apps/api/routes/orders.ts'])).toEqual([
-      'pages/order-ticket.ts',
+    expect(await relatedIn(canonical, 'tests', ['tests/stop-loss.spec.ts', 'pages/order-ticket.ts'])).toEqual([
+      'stop-loss.spec.ts',
     ]);
   });
 });
