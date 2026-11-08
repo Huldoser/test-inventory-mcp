@@ -92,6 +92,8 @@ each pass of a loop as its own test, with the name the runner gives it, as test-
 the same `expandCases` as the `find_tests` call the ids came from. Records have the keys of test-inventory's
 [output format](https://huldoser.github.io/test-inventory/reference/output).
 
+Unknown tool arguments are refused with an error naming the unrecognized key, so misspelled filters are not silently ignored.
+
 Answers are JSON, sent both as structured content and as text. Lists come 50 items at a time (`limit` takes up to
 200), and an answer stays under about 30,000 characters; passing `nextCursor` back as `cursor` gets the next page.
 A single oversized record is returned alone. A final page can fit more records because it needs no next-page cursor or hint.
@@ -106,7 +108,7 @@ say.
 framework, root, patterns, filters and `expandCases` setting for both scans. Hash comparisons and rename matching
 need the exact same core version. Incomplete scans produce warnings. Zero changes returns an empty page and a hint.
 Each saved file must be a regular file of at most 128 MiB. Save scans with the core CLI, without `--fields` or
-`--format jsonl`; see [inventory diffs](https://huldoser.github.io/test-inventory/guide/diff).
+`--format jsonl`; see [inventory diffs](https://huldoser.github.io/test-inventory/guide/diff). If a saved file disappears or becomes unreadable while opening it, the error names the supplied file and suggests checking its existence and readability, without exposing the resolved host path. Cancellation during these operations retains the request's cancellation reason.
 
 ## Security
 

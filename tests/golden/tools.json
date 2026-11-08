@@ -10,6 +10,7 @@
     "description": "Counts a project's tests by state (active, skip, fixme, todo, expectedToFail, notLoaded) and by tag and annotation, from the test files, without running them. Use it first, for questions such as how many tests are skipped, or which files or tags have the most skipped tests; use find_tests to list the tests themselves. states, tags and grep count only the tests they match. groupBy \"file\", \"tag\" or \"project\" adds the counts of each, sorted by name and paged with limit and cursor; a test with no tag is in no tag group, and one whose projects the scan cannot tell in no project group. configs lists the config files read and their projects. Example: {\"states\": [\"skip\", \"fixme\"], \"groupBy\": \"file\"}.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
       "properties": {
         "cursor": {
           "description": "nextCursor from the previous answer, for the next page. Keep the other arguments the same.",
@@ -470,6 +471,7 @@
     "description": "Lists a project's tests that match filters, read from the test files without running them: each with its id, full name, file and line, state, skip reason and condition, and tags by default. Use it for questions such as which tests are skipped and why, which tests carry @smoke, where a .only was left in, or which tests a change can affect (related, the changed files); use test_summary for counts and get_tests for every key of a few ids. projects keeps the tests one of the named projects runs, after each project's grep, leaving out tests whose projects the scan cannot tell. Filters combine with AND; a list matches any of its values. fields picks other keys of the test records (id is always there). Answers are paged: follow nextCursor, or narrow the filters. Example: {\"states\": [\"skip\"], \"withoutReason\": true}.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
       "properties": {
         "cursor": {
           "description": "nextCursor from the previous answer, for the next page. Keep the other arguments the same.",
@@ -1421,6 +1423,7 @@
     "description": "Returns every key of the tests with the given ids, with the scan diagnostics about them, read from the test files without running them: location, describe path, state and where it is set, condition, reason, tags, annotations, comments above the test, parameters, the projects that run it, hooks around it, timeout and retries with where each is set (the test, a describe, the file or the config), fixtures, expect() counts, steps, body hash, and the files the test runs with dependencyHash. Use it after find_tests or test_summary, for the details of up to 20 tests. Ids come from find_tests and stay the same when a test moves to another line, but change when its title, describe or file changes; ids not in the current scan are returned in notFound. Example: {\"ids\": [\"3f9a0c1d2e4b5a69\"]}. An answer that would be too long returns the first tests and the other ids in remaining.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
       "properties": {
         "directory": {
           "description": "A folder inside the project to scan, relative to its root, such as \"packages/web\". Default: the root.",
@@ -2453,6 +2456,7 @@
     "description": "Lists the problems test-inventory found while reading the test files: level error means tests may be missing from the other answers (a file that failed to parse, an import it could not follow), or that the runner fails the file or the run (a Vitest tag the config does not define, a .only that forbidOnly fails); level warning means a value is missing or approximate (a title built at run time, a config value computed at run time, a file no config runs). They are about reading the code, not test failures. Use it when another tool reports scanErrors, or to check why a test is missing or notLoaded. Answers are paged: follow nextCursor. Example: {\"levels\": [\"error\"]}.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
       "properties": {
         "codes": {
           "description": "Keeps problems with these codes.",
@@ -2809,6 +2813,7 @@
     "description": "Compares two complete saved JSON scans inside the project, without running tests or changing files. Reports additions, removals, renames, moves, code and dependency changes, states, tags and other metadata. Uses ids first, then unique body hashes and file, suite or dependency context; ambiguous matches remain added and removed. Use the same framework, root, patterns, filters and expandCases for both saved scans. Hash comparisons and rename matching are disabled across tool versions. Follow nextCursor for more changes. For Playwright, Vitest, Jest, Mocha, Jasmine, Cypress, WebdriverIO, node:test and Bun inventories. Example: {\"before\":\"inventories/base.json\",\"after\":\"inventories/head.json\"}.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
       "properties": {
         "after": {
           "description": "The new complete JSON inventory, relative to the project root; at most 128 MiB.",
