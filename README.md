@@ -80,6 +80,7 @@ test-inventory-mcp [--framework <name>] [<glob...>] [--root <dir>]
 the tests whose `dependencies` include one of them, and those that reach code the scan can't follow, as
 test-inventory's [`--related`](https://huldoser.github.io/test-inventory/guide/cli#tests-a-change-can-affect) does.
 The filter uses the actual scanned folder when `directory` names an internal link or an absolute path inside the project.
+It also keeps tests that import a changed helper elsewhere in the project, outside that scanned folder.
 `dependencies` can list hundreds of files, so it isn't among the default `fields`, and `get_tests` returns as many
 tests as fit in one answer, with the other ids in `remaining`. An id stays the same when a test moves to another
 line, and changes when its title, describes or file change.
@@ -111,7 +112,7 @@ Each saved file must be a regular file of at most 128 MiB. Save scans with the c
 
 The server reads the test files its globs match inside the project, or without globs those the configs run, and,
 for Vitest, the files that symbolic links among them point to, as Vitest does. It reads the configs as code, without
-running them. It refuses a `directory` or pattern that reaches outside the project, and refuses scan answers whose test files, configs or dependencies resolve outside it. Saved inventories must resolve inside the project too. The scanner may read a linked file before the answer is refused; this boundary is not a filesystem sandbox. It runs no code from the project, writes no files, and opens no network connections.
+running them. It refuses a `directory` or pattern that reaches outside the project, including parent-directory components in brace or extglob alternatives, and refuses scan answers whose test files, configs or dependencies resolve outside it. Saved inventories must resolve inside the project too. The scanner may read a linked file before the answer is refused; this boundary is not a filesystem sandbox. It runs no code from the project, writes no files, and opens no network connections.
 
 Answers hold text from the project's files, such as test titles, skip reasons and comments. A client should treat it
 as content of that project, not as instructions. To report a vulnerability, see [SECURITY.md](SECURITY.md).
