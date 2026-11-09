@@ -32,6 +32,11 @@ npm test
 
 ## Documentation
 
+Run `npm run docs:tools` after changing a tool schema or its behavior and review `docs/tools.md`. The generator uses
+tools/list and real calls against a disposable fixture copy. `npm run docs:check` verifies drift; the normal test
+suite checks the same reference. The generator applies the repository's Prettier settings; edit its source instead
+of changing the generated reference by hand.
+
 Keep the README's setup, verification steps, tool list and troubleshooting consistent with the server. Describe
 declared states separately from observed execution, and distinguish the running server's local operation from
 package installation and the client's model provider. The security policy and README must describe the same project
