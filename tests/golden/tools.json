@@ -648,7 +648,7 @@
           "type": "array"
         },
         "withoutReason": {
-          "description": "true keeps tests that don't run and give no reason.",
+          "description": "true keeps non-active tests without a reason, including expected failures; excludes notLoaded.",
           "type": "boolean"
         }
       },
