@@ -1,5 +1,22 @@
 # test-inventory-mcp
 
+## 0.9.0
+
+### Minor Changes
+
+- [#36](https://github.com/Huldoser/test-inventory-mcp/pull/36) [`204339e`](https://github.com/Huldoser/test-inventory-mcp/commit/204339e25feb6cc05f32d39f485724e7b85786f2) - Reject unknown tool arguments instead of silently ignoring misspelled filters. Report saved-inventory I/O failures with corrective messages rather than resolved host paths, and preserve cancellation reasons during file operations.
+
+  Tool input schemas now set additionalProperties to false. Clients must send only declared arguments; previously unknown keys were accepted and ignored.
+
+### Patch Changes
+
+- [#35](https://github.com/Huldoser/test-inventory-mcp/pull/35) [`9d6f384`](https://github.com/Huldoser/test-inventory-mcp/commit/9d6f384d5113fad1d8960a4c81bd599762393b2b) - Keep affected tests when related paths are filtered for a directory reached through an internal link or an absolute project path.
+  Keep dependencies on changed helpers elsewhere in the project when scanning a subdirectory. Refuse parent-directory components in brace and extglob alternatives.
+
+  Return a complete final page when dropping its cursor and paging hint lets the answer fit the size limit.
+
+- [#37](https://github.com/Huldoser/test-inventory-mcp/pull/37) [`b5a81f3`](https://github.com/Huldoser/test-inventory-mcp/commit/b5a81f3a56c58c5d0d64fb1ebd2664fc9330ef61) - Require test-inventory ^0.10.1 so MCP scans include the released fixes for named describe callbacks, suite parent links, Playwright modifier aliases and config alias dependencies. Saved inventory diffs also ignore annotation and step line moves.
+
 ## 0.8.0
 
 ### Minor Changes
