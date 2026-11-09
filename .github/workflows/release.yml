@@ -103,4 +103,4 @@ jobs:
     permissions:
       contents: read
       id-token: write
-    uses: ./.github/workflows/publish-mcp.yml
+    uses: $/.github/workflows/publish-mcp.yml
