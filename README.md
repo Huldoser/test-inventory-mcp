@@ -82,6 +82,9 @@ test-inventory-mcp [--framework <name>] [<glob...>] [--root <dir>]
 
 ## Tools
 
+The generated [tool reference](https://github.com/Huldoser/test-inventory-mcp/blob/main/docs/tools.md) lists each argument's type, default and bounds, response fields,
+complete request/response examples, pagination and errors. It is checked against the running server in tests.
+
 | Tool               | Answers                                                                                                                            |
 | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `test_summary`     | Counts by state, tag and annotation, and the configs with their projects; with `groupBy`, the counts of each file, tag or project. |
