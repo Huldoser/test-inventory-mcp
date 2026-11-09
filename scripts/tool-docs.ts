@@ -1,4 +1,4 @@
-import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -86,7 +86,7 @@ function json(value: unknown): string {
 
 /** Builds the reference from a real tools/list response and calls on a disposable trading fixture. */
 export async function toolDocs(): Promise<string> {
-  const root = mkdtempSync(path.join(tmpdir(), 'test-inventory-tool-docs-'));
+  const root = realpathSync.native(mkdtempSync(path.join(tmpdir(), 'test-inventory-tool-docs-')));
   cpSync(fixture, root, { recursive: true });
   const server = createServer({ root, framework: 'playwright', patterns: ['tests/**/*.spec.ts'] });
   const client = new Client({ name: 'documentation', version: '1.0.0' });

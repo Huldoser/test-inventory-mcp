@@ -1,4 +1,4 @@
-import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, expect, it } from 'vitest';
@@ -66,7 +66,7 @@ it('distinguishes a valid empty query from an argument error using the documente
 });
 
 it('reports scan gaps when an empty matching result comes from unreadable test imports', async () => {
-  const root = mkdtempSync(path.join(tmpdir(), 'test-inventory-mcp-docs-'));
+  const root = realpathSync.native(mkdtempSync(path.join(tmpdir(), 'test-inventory-mcp-docs-')));
   try {
     mkdirSync(path.join(root, 'tests'));
     writeFileSync(
