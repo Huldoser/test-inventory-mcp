@@ -91,7 +91,7 @@ It starts with `io.github.Huldoser/`, spelled as GitHub spells the account, sinc
 for `--root`, the absolute path to the local project; Node.js 22.12 or newer must be installed.
 
 Run `node scripts/publish-mcp.ts` to validate the metadata and verify the matching published npm package. After npm
-publishes, the Release workflow calls Publish MCP Registry. For the first listing, or to retry metadata publication
+publishes, the Release workflow publishes matching registry metadata. For the first listing, or to retry metadata publication
 after a registry failure, run Publish MCP Registry manually on `main` in GitHub Actions. It verifies an existing
 entry before treating it as published. It never republishes the npm package.
 

@@ -96,11 +96,6 @@ jobs:
         with:
           pack-dir-artifact-id: ${{ needs.pack.outputs.pack-dir-artifact-id }}
 
-  registry:
-    name: Publish MCP metadata
-    needs: publish
-    if: needs.publish.outputs.published == 'true'
-    permissions:
-      contents: read
-      id-token: write
-    uses: $/.github/workflows/publish-mcp.yml
+      - name: Publish MCP Registry metadata
+        if: steps.publish.outputs.published == 'true'
+        run: node scripts/publish-mcp.ts --publish
