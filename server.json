@@ -1,0 +1,29 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.Huldoser/test-inventory",
+  "title": "Test Inventory",
+  "description": "Discover tests, skip reasons and affected tests, and compare inventories without running tests.",
+  "repository": {
+    "url": "https://github.com/Huldoser/test-inventory-mcp",
+    "source": "github"
+  },
+  "version": "0.9.0",
+  "websiteUrl": "https://huldoser.github.io/test-inventory/guide/agents",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "test-inventory-mcp",
+      "version": "0.9.0",
+      "transport": { "type": "stdio" },
+      "packageArguments": [
+        {
+          "type": "named",
+          "name": "--root",
+          "description": "Absolute path to the local project to scan. Requires Node.js 22.12 or newer.",
+          "format": "filepath",
+          "isRequired": true
+        }
+      ]
+    }
+  ]
+}

@@ -84,6 +84,22 @@ npm trust github test-inventory-mcp --file release.yml --repo Huldoser/test-inve
 `mcpName` in `package.json` is the server's name in the MCP Registry, which checks it against the published package.
 It starts with `io.github.Huldoser/`, spelled as GitHub spells the account, since the registry compares it exactly.
 
+### MCP Registry
+
+`server.json` describes the npm package for the official MCP Registry. The publication script takes the version from
+`package.json`, so future releases use their exact npm version without changing the template. Registry installs ask
+for `--root`, the absolute path to the local project; Node.js 22.12 or newer must be installed.
+
+Run `node scripts/publish-mcp.ts` to validate the metadata and verify the matching published npm package. After npm
+publishes, the Release workflow calls Publish MCP Registry. For the first listing, or to retry metadata publication
+after a registry failure, run Publish MCP Registry manually on `main` in GitHub Actions. It verifies an existing
+entry before treating it as published. It never republishes the npm package.
+
+The workflow exchanges GitHub Actions OIDC identity for a registry token through the registry's HTTP API. Tokens stay
+in memory and are never saved or printed. No registry secret or additional publisher tool is needed. The registry
+is in preview; its [publishing documentation](https://modelcontextprotocol.io/registry/github-actions) and
+[publisher implementation](https://github.com/modelcontextprotocol/registry/tree/main/cmd/publisher) describe the flow.
+
 ### When a release goes wrong
 
 - **The version is on npm, but there is no tag or GitHub release**, for example when the workflow failed after
