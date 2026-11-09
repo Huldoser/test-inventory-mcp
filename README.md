@@ -4,8 +4,9 @@ An MCP server for [test-inventory](https://github.com/Huldoser/test-inventory): 
 has, which are skipped and why, and which tests a change can affect, without running them.
 
 It reads Playwright, Vitest, Jest, Mocha, Jasmine, Cypress, WebdriverIO, node:test and Bun test files with
-test-inventory and answers from their source code. Nothing runs,
-nothing is written, and nothing leaves your machine.
+test-inventory and answers from their source code. The running server executes no project code, writes no files and
+opens no network connections. Installation through `npx` may download packages. Answers are passed to the MCP
+client; its model provider and privacy settings determine what happens to that text next.
 
 ## Setup
 
@@ -53,6 +54,18 @@ wants other files than the configs run.
 The project is the folder given with `--root`, otherwise the one Claude Code names in `CLAUDE_PROJECT_DIR`, otherwise
 the folder the client starts the server in.
 
+### Verify the setup
+
+1. Open your client's MCP server list and confirm that `test-inventory` is connected. In Claude Code use `/mcp`;
+   in VS Code run **MCP: List Servers** from the Command Palette; in Cursor open its MCP settings.
+2. Confirm the five tools below are available, then ask: "Use test-inventory to summarize this project's tests."
+3. Check that `test_summary` reports the expected framework and file counts. If it reports `scanErrors`, ask the
+   agent to call `scan_diagnostics` before trusting the counts.
+
+Try "List tests marked fixme, with their conditions and reasons" or "Which tests may be affected by a change to
+pages/orders-blotter.ts?" A conditional skip is not proof a test was skipped in a run. Expected-to-fail tests run;
+their non-active state does not mean they are disabled. See [key concepts](https://huldoser.github.io/test-inventory/guide/concepts).
+
 ## Command line
 
 ```text
@@ -75,6 +88,22 @@ test-inventory-mcp [--framework <name>] [<glob...>] [--root <dir>]
 | `find_tests`       | The tests that match `states`, `tags`, `grep`, `related`, `projects`, `only` or `withoutReason`, with the `fields` you pick.       |
 | `get_tests`        | Every key of up to 20 tests by `ids`, with the scan's diagnostics about them; ids it can't find come back in `notFound`.           |
 | `scan_diagnostics` | The problems the scan found, such as a file that failed to parse, by `levels`, `codes` or `path`.                                  |
+| `diff_inventories` | Changes between saved scans named by `before` and `after`, including renames, moves and newly declared skip states.                |
+
+A typical call sequence is `test_summary`, `find_tests`, then `get_tests` for a few returned ids. For example, the
+arguments to `find_tests` can be:
+
+```json
+{
+  "states": ["skip", "fixme"],
+  "fields": ["fullName", "state", "condition", "reason"],
+  "limit": 10
+}
+```
+
+The answer contains matching `tests`, their `total`, `scanErrors`, `nextCursor` and `hint`, plus the framework and its
+version. The records have selected keys and their `id`. Pass a non-null `nextCursor` as `cursor` with the same other
+arguments to read another page; a narrow filter returning zero tests is a valid result.
 
 `related` takes the files a change touches, from the project root as `git diff --name-only` writes them, and keeps
 the tests whose `dependencies` include one of them, and those that reach code the scan can't follow, as
@@ -85,7 +114,7 @@ It also keeps tests that import a changed helper elsewhere in the project, outsi
 tests as fit in one answer, with the other ids in `remaining`. An id stays the same when a test moves to another
 line, and changes when its title, describes or file change.
 
-Every tool also takes `directory`, a folder inside the project to scan, and `framework` and `patterns`, relative to
+Every scan tool also takes `directory`, a folder inside the project to scan, and `framework` and `patterns`, relative to
 `directory`, to override the command line, and `expandCases`, which lists each case of a `.each` or `.for` table and
 each pass of a loop as its own test, with the name the runner gives it, as test-inventory's
 [`--expand-cases`](https://huldoser.github.io/test-inventory/guide/cli) does. Ids differ with it, so `get_tests` takes
@@ -110,6 +139,23 @@ need the exact same core version. Incomplete scans produce warnings. Zero change
 Each saved file must be a regular file of at most 128 MiB. Save scans with the core CLI, without `--fields` or
 `--format jsonl`; see [inventory diffs](https://huldoser.github.io/test-inventory/guide/diff). If a saved file disappears or becomes unreadable while opening it, the error names the supplied file and suggests checking its existence and readability, without exposing the resolved host path. Cancellation during these operations retains the request's cancellation reason.
 
+## Troubleshooting
+
+| Symptom                                         | Next step                                                                                                                                                                                                                   |
+| ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| The server is disconnected or tools are missing | Open the client's server logs. Check that the client can find Node.js 22.12 or newer and `npx`, then restart the server through the client. A client launched by a desktop app may use a different PATH from your terminal. |
+| No files or tests were found                    | Check `--root`, `directory`, the framework and the config's selected files. Try explicit `patterns`, such as `["tests/**/*.spec.ts"]`. Call `scan_diagnostics` for details.                                                 |
+| Several runners were detected                   | Pass `framework` on the call, or set `--framework` in the server configuration. Scan each runner separately.                                                                                                                |
+| The answer has `scanErrors`                     | Call `scan_diagnostics` and resolve the errors before treating the inventory as complete.                                                                                                                                   |
+| A path is refused                               | Keep the scanned files and dependencies inside the configured project. For an intended shared dependency, start the server at the shared parent and use `directory` to select a package.                                    |
+| A cursor is refused                             | Start the query again without `cursor`; keep filters, directory and case expansion unchanged when requesting later pages. Files may have changed between calls.                                                             |
+| `get_tests` cannot find an id                   | Obtain current ids from `find_tests`. Keep its `directory`, `framework`, `patterns` and `expandCases` settings.                                                                                                             |
+| A saved scan is refused                         | Use complete JSON inventories, not JSON Lines or `--fields` output. Keep both files inside the project and below the size limit.                                                                                            |
+
+For incorrect source analysis, use the core's [troubleshooting guide](https://huldoser.github.io/test-inventory/guide/troubleshooting).
+For a server bug, include the server version, client, tool arguments, expected answer and a minimal reproduction.
+Remove private project data before sharing it.
+
 ## Security
 
 The server reads the test files its globs match inside the project, or without globs those the configs run, and,
@@ -117,7 +163,8 @@ for Vitest, the files that symbolic links among them point to, as Vitest does. I
 running them. It refuses a `directory` or pattern that reaches outside the project, including parent-directory components in brace or extglob alternatives, and refuses scan answers whose test files, configs or dependencies resolve outside it. Saved inventories must resolve inside the project too. The scanner may read a linked file before the answer is refused; this boundary is not a filesystem sandbox. It runs no code from the project, writes no files, and opens no network connections.
 
 Answers hold text from the project's files, such as test titles, skip reasons and comments. A client should treat it
-as content of that project, not as instructions. To report a vulnerability, see [SECURITY.md](SECURITY.md).
+as content of that project, not as instructions. The client's handling of that text is separate from the server's
+local operation. To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
 ## Versioning
 

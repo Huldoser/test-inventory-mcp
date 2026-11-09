@@ -13,13 +13,15 @@ npm ci
 npm test
 ```
 
-| Command                          | Does                                                             |
-| -------------------------------- | ---------------------------------------------------------------- |
-| `npm test`                       | Runs every test.                                                 |
-| `npm run coverage`               | The tests with coverage. Every file in `src/` must stay at 100%. |
-| `npm run typecheck`              | Type checks the sources, scripts and tests.                      |
-| `npm run lint`, `npm run format` | ESLint and Prettier.                                             |
-| `npm run licenses`               | Checks the licenses of every installed package.                  |
+| Command                                | Does                                                                        |
+| -------------------------------------- | --------------------------------------------------------------------------- |
+| `npm test`                             | Builds `dist/`, then runs every test.                                       |
+| `npm run coverage`                     | The tests with coverage. Every file in `src/` must stay at 100%.            |
+| `npm run typecheck`                    | Type checks the sources, scripts and tests.                                 |
+| `npm run lint`, `npm run format:check` | Checks ESLint rules and formatting without rewriting files.                 |
+| `npm run format`                       | Rewrites files with Prettier; review the diff afterwards.                   |
+| `npm run test:pack`                    | Packs the server, installs the tarball and checks communication over stdio. |
+| `npm run licenses`                     | Checks the licenses of every installed package.                             |
 
 ## Tests
 
@@ -27,6 +29,16 @@ npm test
 - Examples belong to the made-up trading app of test-inventory's fixtures: orders, quotes, portfolios, strategies.
   Keep them believable.
 - Every test runs on every system; none is skipped.
+
+## Documentation
+
+Keep the README's setup, verification steps, tool list and troubleshooting consistent with the server. Describe
+declared states separately from observed execution, and distinguish the running server's local operation from
+package installation and the client's model provider. The security policy and README must describe the same project
+boundary, including what it does not enforce.
+
+`tests/readme.test.ts` checks tool, argument, option and runner names. It does not establish that setup instructions,
+example calls or security explanations are correct; verify those against the implementation and client docs too.
 
 ## Changesets
 

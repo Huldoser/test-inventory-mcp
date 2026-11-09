@@ -355,7 +355,10 @@ export function createServer(config: ServerConfig): McpServer {
           .optional()
           .describe('Keeps tests that one of these projects runs, named as in the configs test_summary lists.'),
         only: z.boolean().optional().describe('true keeps tests that use .only, or are in a describe that does.'),
-        withoutReason: z.boolean().optional().describe("true keeps tests that don't run and give no reason."),
+        withoutReason: z
+          .boolean()
+          .optional()
+          .describe('true keeps non-active tests without a reason, including expected failures; excludes notLoaded.'),
         fields: z
           .array(z.enum(TEST_KEYS))
           .min(1)
