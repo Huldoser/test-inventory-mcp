@@ -1,5 +1,20 @@
 # test-inventory-mcp
 
+## 0.9.1
+
+### Patch Changes
+
+- [#40](https://github.com/Huldoser/test-inventory-mcp/pull/40) [`5560a57`](https://github.com/Huldoser/test-inventory-mcp/commit/5560a579ee0436e7d6346e176ecc193a8977e5bf) - Clarify that withoutReason includes expected failures and does not establish whether a test executes. Document all
+  five tools, add setup verification and troubleshooting, and distinguish server-local operation from installation,
+  client data handling and filesystem isolation.
+
+- [#41](https://github.com/Huldoser/test-inventory-mcp/pull/41) [`2837d6c`](https://github.com/Huldoser/test-inventory-mcp/commit/2837d6c3b89c2009d5335eeab4f77e00ed89e3ad) - Generate the five-tool reference from server schemas and real fixture calls, with complete results, pagination,
+  empty matches and corrective errors. Check the generated reference and documented workflows in the test suite.
+
+- [#42](https://github.com/Huldoser/test-inventory-mcp/pull/42) [`bd89da4`](https://github.com/Huldoser/test-inventory-mcp/commit/bd89da4970b014ef5b4203e5c5eb8a746efd3157) - Require test-inventory 0.10.2 so MCP scans receive the named node:test context, subtest parent link, linked-folder,
+  concurrency, missing Jest preset and malformed TOML fixes. Regenerate the tool reference with the released core.
+  Refresh the tool output-schema descriptions for config selection, active state and inherited retries.
+
 ## 0.9.0
 
 ### Minor Changes
