@@ -10,6 +10,9 @@ client; its model provider and privacy settings determine what happens to that t
 
 ## Setup
 
+The server requires test-inventory 0.10.2 or a later 0.10 patch, including its
+[Node context/concurrency, Jest preset and TOML fixes](https://github.com/Huldoser/test-inventory/releases/tag/v0.10.2).
+
 Node.js 22.12 or newer. The client starts the server with `npx` and talks to it over standard input and output. The
 server scans the test files your test runner's config runs, with the runner `--framework` names or, without
 it, the one the project uses. Globs pick the files instead, as on test-inventory's command line.

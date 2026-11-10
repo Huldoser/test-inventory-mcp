@@ -113,7 +113,7 @@
       "additionalProperties": false,
       "definitions": {
         "ConfigRecord": {
-          "description": "A runner's config that scanned files use. For Playwright and Vitest, the nearest one in a file's folder or a folder above it, up to the root, as the runner started in that folder would; for Jest, the one at the root and the projects it names; for the other runners, the one config they read for the whole run. Read as code, never run.",
+          "description": "A runner's config that scanned files use. For Playwright and Vitest, the outermost config at or above the file that runs it, up to the root, else the nearest; for Jest, the one at the root and the projects it names; for the other runners, the one config they read for the whole run. Read as code, never run.",
           "properties": {
             "extends": {
               "description": "Files the config takes settings from through imports, such as a shared base config, in the order read.",
@@ -1076,6 +1076,7 @@
                 "type": "string"
               },
               "isActive": {
+                "description": "True only for state active; false does not establish that the test never executes.",
                 "type": "boolean"
               },
               "isBenchmark": {
@@ -1242,7 +1243,7 @@
                     "type": "null"
                   }
                 ],
-                "description": "How many times the runner retries the test when it fails; null when the file sets none."
+                "description": "Effective retry count from the test, suite, file or config; null when absent or unknown. See retriesSource."
               },
               "retriesConfigText": {
                 "description": "The config's source text for `retries`, read as `timeoutConfigText` is.",
@@ -1969,6 +1970,7 @@
               "type": "string"
             },
             "isActive": {
+              "description": "True only for state active; false does not establish that the test never executes.",
               "type": "boolean"
             },
             "isBenchmark": {
@@ -2135,7 +2137,7 @@
                   "type": "null"
                 }
               ],
-              "description": "How many times the runner retries the test when it fails; null when the file sets none."
+              "description": "Effective retry count from the test, suite, file or config; null when absent or unknown. See retriesSource."
             },
             "retriesConfigText": {
               "description": "The config's source text for `retries`, read as `timeoutConfigText` is.",
@@ -3565,6 +3567,7 @@
               "type": "string"
             },
             "isActive": {
+              "description": "True only for state active; false does not establish that the test never executes.",
               "type": "boolean"
             },
             "isBenchmark": {
@@ -3731,7 +3734,7 @@
                   "type": "null"
                 }
               ],
-              "description": "How many times the runner retries the test when it fails; null when the file sets none."
+              "description": "Effective retry count from the test, suite, file or config; null when absent or unknown. See retriesSource."
             },
             "retriesConfigText": {
               "description": "The config's source text for `retries`, read as `timeoutConfigText` is.",
