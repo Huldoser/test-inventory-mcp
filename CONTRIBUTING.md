@@ -107,10 +107,16 @@ It starts with `io.github.Huldoser/`, spelled as GitHub spells the account, sinc
 `package.json`, so future releases use their exact npm version without changing the template. Registry installs ask
 for `--root`, the absolute path to the local project; Node.js 22.12 or newer must be installed.
 
-Run `node scripts/publish-mcp.ts` to validate the metadata and verify the matching published npm package. After npm
-publishes, the Release workflow publishes matching registry metadata. For the first listing, or to retry metadata publication
-after a registry failure, run Publish MCP Registry manually on `main` in GitHub Actions. It verifies an existing
-entry before treating it as published. It never republishes the npm package.
+Run `node scripts/publish-mcp.ts` to validate the metadata and verify the matching published npm package. Both this
+validation command and publication retry npm HTTP 404 responses for the exact version: up to 12 checks with 15-second
+waits and a 10-second timeout per request, bounded to 4 minutes 45 seconds. Other HTTP errors, request failures,
+invalid JSON and mismatched package names, versions or `mcpName` values stop immediately. Response bodies and request
+errors are not logged.
+
+After npm publishes, the Release workflow waits for that verification before publishing matching registry metadata.
+For the first listing, or to retry metadata publication after a registry failure or an exhausted npm wait, run Publish
+MCP Registry manually on `main` in GitHub Actions. It verifies an existing entry before treating it as published. It
+never republishes the npm package.
 
 The workflow exchanges GitHub Actions OIDC identity for a registry token through the registry's HTTP API. Tokens stay
 in memory and are never saved or printed. No registry secret or additional publisher tool is needed. The registry

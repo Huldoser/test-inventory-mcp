@@ -14,17 +14,20 @@ const metadata = JSON.parse(readFileSync(new URL('../server.json', import.meta.u
 metadata.version = manifest.version;
 metadata.packages[0].version = manifest.version;
 const request = vi.fn<typeof fetch>();
+const output = vi.fn();
 
 beforeEach(() => {
   request.mockReset();
+  output.mockClear();
   vi.stubGlobal('fetch', request);
   vi.stubEnv('GITHUB_REF', 'refs/heads/main');
   vi.stubEnv('ACTIONS_ID_TOKEN_REQUEST_TOKEN', 'EXAMPLE_REQUEST_TOKEN');
   vi.stubEnv('ACTIONS_ID_TOKEN_REQUEST_URL', 'https://identity.example/token?request=EXAMPLE');
-  vi.spyOn(console, 'log').mockImplementation(() => undefined);
+  vi.spyOn(console, 'log').mockImplementation(output);
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
   vi.restoreAllMocks();
@@ -35,6 +38,97 @@ function validMetadata(): void {
 }
 
 describe('MCP registry publication', () => {
+  it.each([1, 11])('waits for npm propagation through %i not-found responses before validation', async (missing) => {
+    vi.useFakeTimers();
+    for (let i = 0; i < missing; i++) request.mockResolvedValueOnce(new Response(null, { status: 404 }));
+    validMetadata();
+
+    const publication = publishMcp();
+    await vi.advanceTimersByTimeAsync(14_999);
+    expect(request).toHaveBeenCalledTimes(1);
+    await vi.advanceTimersByTimeAsync(1 + (missing - 1) * 15_000);
+    await publication;
+
+    expect(request).toHaveBeenCalledTimes(missing + 2);
+    for (const [url, options] of request.mock.calls.slice(0, missing + 1)) {
+      expect(url).toBe(`https://registry.npmjs.org/${manifest.name}/${manifest.version}`);
+      expect(options).toMatchObject({ redirect: 'error' });
+      expect(options?.headers).toBeUndefined();
+    }
+    expect(request.mock.calls[missing + 1]?.[0]).toBe('https://registry.modelcontextprotocol.io/v0/validate');
+  });
+
+  it('stops after twelve npm checks without validating or publishing unavailable metadata', async () => {
+    vi.useFakeTimers();
+    request.mockResolvedValue(new Response(null, { status: 404 }));
+    const failure = expect(publishMcp(true)).rejects.toThrow(
+      'npm package is still unavailable after 12 checks; retry the MCP Registry metadata workflow later.',
+    );
+    await vi.advanceTimersByTimeAsync(11 * 15_000);
+    await failure;
+    expect(request).toHaveBeenCalledTimes(12);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it.each([400, 401, 403, 429, 500, 503])(
+    'stops immediately on npm HTTP %i without logging the response',
+    async (status) => {
+      request.mockResolvedValueOnce(new Response('EXAMPLE_RESPONSE_CREDENTIAL', { status }));
+      await expect(publishMcp(true)).rejects.toThrow(
+        'npm verification failed; no response body or credentials were logged.',
+      );
+      expect(request).toHaveBeenCalledTimes(1);
+      expect(output).not.toHaveBeenCalled();
+    },
+  );
+
+  it('stops on npm authorization failure after a propagation retry', async () => {
+    vi.useFakeTimers();
+    request
+      .mockResolvedValueOnce(new Response(null, { status: 404 }))
+      .mockResolvedValueOnce(new Response('EXAMPLE_RESPONSE_CREDENTIAL', { status: 403 }));
+    const failure = expect(publishMcp(true)).rejects.toThrow(
+      'npm verification failed; no response body or credentials were logged.',
+    );
+    await vi.advanceTimersByTimeAsync(15_000);
+    await failure;
+    expect(request).toHaveBeenCalledTimes(2);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('stops on a failed npm request without logging its error or retrying', async () => {
+    request.mockRejectedValueOnce(new Error('EXAMPLE_REQUEST_CREDENTIAL'));
+    await expect(publishMcp(true)).rejects.toThrow(
+      'npm verification failed; no response body or credentials were logged.',
+    );
+    expect(request).toHaveBeenCalledTimes(1);
+    expect(output).not.toHaveBeenCalled();
+  });
+
+  it('stops on malformed npm JSON without logging its content or retrying', async () => {
+    request.mockResolvedValueOnce(new Response('EXAMPLE_RESPONSE_CREDENTIAL'));
+    await expect(publishMcp(true)).rejects.toThrow(
+      'npm verification failed; no response body or credentials were logged.',
+    );
+    expect(request).toHaveBeenCalledTimes(1);
+    expect(output).not.toHaveBeenCalled();
+  });
+
+  it.each([{ name: 'unrelated-package' }, { version: '0.0.0' }, { mcpName: 'com.example/unrelated' }])(
+    'refuses mismatched npm identity after propagation: %j',
+    async (mismatch) => {
+      vi.useFakeTimers();
+      request
+        .mockResolvedValueOnce(new Response(null, { status: 404 }))
+        .mockResolvedValueOnce(Response.json({ ...manifest, ...mismatch }));
+      const failure = expect(publishMcp(true)).rejects.toThrow('matching npm package');
+      await vi.advanceTimersByTimeAsync(15_000);
+      await failure;
+      expect(request).toHaveBeenCalledTimes(2);
+      expect(vi.getTimerCount()).toBe(0);
+    },
+  );
+
   it('validates without requesting credentials or publishing', async () => {
     validMetadata();
     await publishMcp();

@@ -16,6 +16,24 @@ async function requestJson<T>(label: string, url: string | URL, options: Request
   }
 }
 
+async function waitForNpm<T>(url: string): Promise<T> {
+  for (let attempt = 1; attempt <= 12; attempt++) {
+    try {
+      const response = await fetch(url, { redirect: 'error', signal: AbortSignal.timeout(10_000) });
+      if (response.ok) return (await response.json()) as T;
+      // Only a missing exact version is evidence of npm propagation; other failures must stop publication.
+      if (response.status !== 404) throw new Error();
+    } catch {
+      throw new Error('npm verification failed; no response body or credentials were logged.');
+    }
+    if (attempt < 12) {
+      console.log(`npm package is not readable yet; retrying verification (${attempt}/12).`);
+      await new Promise((resolve) => setTimeout(resolve, 15_000));
+    }
+  }
+  throw new Error('npm package is still unavailable after 12 checks; retry the MCP Registry metadata workflow later.');
+}
+
 function jsonPost(body: unknown, token?: string): RequestInit {
   return {
     method: 'POST',
@@ -41,8 +59,7 @@ export async function publishMcp(publish = false): Promise<void> {
   metadata.version = manifest.version;
   metadata.packages[0].version = manifest.version;
 
-  const published = await requestJson<typeof manifest>(
-    'npm verification',
+  const published = await waitForNpm<typeof manifest>(
     `https://registry.npmjs.org/${manifest.name}/${manifest.version}`,
   );
   if (
