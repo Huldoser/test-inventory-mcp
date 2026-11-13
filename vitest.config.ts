@@ -2,6 +2,8 @@ import { configDefaults, defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
+    // Parallel fixture scans can starve five-second checks on slow CI runners.
+    maxWorkers: 1,
     include: ['tests/**/*.test.ts'],
     // The fixture projects contain test files of their own, which are scanned, never run.
     exclude: [...configDefaults.exclude, 'tests/fixtures/**'],
