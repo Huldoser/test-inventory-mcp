@@ -1,5 +1,11 @@
 # test-inventory-mcp
 
+## 0.9.2
+
+### Patch Changes
+
+- [#45](https://github.com/Huldoser/test-inventory-mcp/pull/45) [`ff04416`](https://github.com/Huldoser/test-inventory-mcp/commit/ff0441641a2db0fc1dbb901fcb4b8e0bad5ca852) - Require test-inventory 0.10.3 or a later 0.10 patch so MCP scans include the Node and Jest declaration fixes, avoid false Playwright load failures, and keep tests when a local require function is called without arguments. Registry publication now waits briefly when npm's exact-version read endpoint has not caught up, while other verification failures still stop publication.
+
 ## 0.9.1
 
 ### Patch Changes
