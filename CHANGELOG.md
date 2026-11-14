@@ -1,5 +1,11 @@
 # test-inventory-mcp
 
+## 0.9.3
+
+### Patch Changes
+
+- [#47](https://github.com/Huldoser/test-inventory-mcp/pull/47) [`159e7b1`](https://github.com/Huldoser/test-inventory-mcp/commit/159e7b1b731a1ea043776585a62a816c0ffe35f3) - Require test-inventory 0.10.4, which counts configs that package.json scripts pass to the runner and no longer reports files a collected test imports as not run, so the scan tools stop reporting those tests as never run.
+
 ## 0.9.2
 
 ### Patch Changes
