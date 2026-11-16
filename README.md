@@ -10,8 +10,8 @@ client; its model provider and privacy settings determine what happens to that t
 
 ## Setup
 
-The server requires test-inventory 0.10.4 or a later 0.10 patch, including its
-[reading of configs that package.json scripts pass to the runner](https://github.com/Huldoser/test-inventory/releases/tag/v0.10.4).
+The server requires test-inventory 0.11.0 or a later 0.11 patch, including its
+[support for older runner versions and where each test reaches code the scan can't follow](https://github.com/Huldoser/test-inventory/releases/tag/v0.11.0).
 
 Node.js 22.12 or newer. The client starts the server with `npx` and talks to it over standard input and output. The
 server scans the test files your test runner's config runs, with the runner `--framework` names or, without
@@ -20,7 +20,7 @@ it, the one the project uses. Globs pick the files instead, as on test-inventory
 **Claude Code**, in the project folder. `--scope project` writes `.mcp.json`, for everyone who works on the project:
 
 ```sh
-claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.9 --framework playwright
+claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.10 --framework playwright
 ```
 
 **Cursor**, in `.cursor/mcp.json`:
@@ -30,7 +30,7 @@ claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.9 -
   "mcpServers": {
     "test-inventory": {
       "command": "npx",
-      "args": ["-y", "test-inventory-mcp@0.9", "--framework", "playwright"]
+      "args": ["-y", "test-inventory-mcp@0.10", "--framework", "playwright"]
     }
   }
 }
@@ -44,7 +44,7 @@ claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.9 -
     "test-inventory": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "test-inventory-mcp@0.9", "--framework", "playwright"]
+      "args": ["-y", "test-inventory-mcp@0.10", "--framework", "playwright"]
     }
   }
 }
@@ -175,7 +175,7 @@ local operation. To report a vulnerability, see [SECURITY.md](SECURITY.md).
 ## Versioning
 
 Tool names, their arguments and their answers are the server's API. Before 1.0, a change that breaks them raises the
-minor version, so `test-inventory-mcp@0.9` in the setup above gets fixes only.
+minor version, so `test-inventory-mcp@0.10` in the setup above gets fixes only.
 
 ## License
 
