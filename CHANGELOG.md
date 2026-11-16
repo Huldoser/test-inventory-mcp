@@ -1,5 +1,11 @@
 # test-inventory-mcp
 
+## 0.10.0
+
+### Minor Changes
+
+- [#50](https://github.com/Huldoser/test-inventory-mcp/pull/50) [`d13401b`](https://github.com/Huldoser/test-inventory-mcp/commit/d13401b552b50e469d58b6a6ddd94b4cc2bedb9b) - Require test-inventory 0.11.0 or a later 0.11 patch. Test records have `unfollowedDependencies`, the file and line of each place a test reaches code the scan can't follow, which `fields` can ask for; scans read Playwright 1.31 to 1.41, Vitest 1 and 2, Jest 27 and 28, Jasmine 3, Cypress 10 to 12 and WebdriverIO 7 and 8, and list tests in helpers, re-exported test objects and config factories that 0.10 missed or misread.
+
 ## 0.9.3
 
 ### Patch Changes
