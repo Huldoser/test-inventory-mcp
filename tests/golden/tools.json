@@ -496,6 +496,7 @@
               "dependencyHash",
               "dependencies",
               "hasUnfollowedDependencies",
+              "unfollowedDependencies",
               "suiteId",
               "parentTestId",
               "suitePath",
@@ -942,7 +943,7 @@
                     "type": "null"
                   }
                 ],
-                "description": "Hash of the test body, ignoring whitespace and comments; null when the test has no body."
+                "description": "Hash of the test body, ignoring whitespace and comments: the test function, one passed by name, or the one a wrapper call receives; null when the test has none of these."
               },
               "caseCount": {
                 "anyOf": [
@@ -1385,6 +1386,13 @@
               "titleWithoutTags": {
                 "description": "`title` with `@tag` words removed and spaces tidied.",
                 "type": "string"
+              },
+              "unfollowedDependencies": {
+                "description": "Where the test reaches what couldn't be followed: the file and line of each place, as `support/venues.ts:2`, sorted; empty when `hasUnfollowedDependencies` is false. A `dependency-not-followed` warning at the place says what it is.",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
               }
             },
             "required": [
@@ -1836,7 +1844,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Hash of the test body, ignoring whitespace and comments; null when the test has no body."
+              "description": "Hash of the test body, ignoring whitespace and comments: the test function, one passed by name, or the one a wrapper call receives; null when the test has none of these."
             },
             "caseCount": {
               "anyOf": [
@@ -2279,6 +2287,13 @@
             "titleWithoutTags": {
               "description": "`title` with `@tag` words removed and spaces tidied.",
               "type": "string"
+            },
+            "unfollowedDependencies": {
+              "description": "Where the test reaches what couldn't be followed: the file and line of each place, as `support/venues.ts:2`, sorted; empty when `hasUnfollowedDependencies` is false. A `dependency-not-followed` warning at the place says what it is.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
             }
           },
           "required": [
@@ -2287,6 +2302,7 @@
             "dependencyHash",
             "dependencies",
             "hasUnfollowedDependencies",
+            "unfollowedDependencies",
             "suiteId",
             "parentTestId",
             "suitePath",
@@ -3113,6 +3129,7 @@
                       "dependencyHash",
                       "dependencies",
                       "hasUnfollowedDependencies",
+                      "unfollowedDependencies",
                       "suiteId",
                       "parentTestId",
                       "suitePath",
@@ -3218,6 +3235,7 @@
                       "dependencyHash",
                       "dependencies",
                       "hasUnfollowedDependencies",
+                      "unfollowedDependencies",
                       "suiteId",
                       "parentTestId",
                       "suitePath",
@@ -3323,6 +3341,7 @@
                       "dependencyHash",
                       "dependencies",
                       "hasUnfollowedDependencies",
+                      "unfollowedDependencies",
                       "suiteId",
                       "parentTestId",
                       "suitePath",
@@ -3433,7 +3452,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Hash of the test body, ignoring whitespace and comments; null when the test has no body."
+              "description": "Hash of the test body, ignoring whitespace and comments: the test function, one passed by name, or the one a wrapper call receives; null when the test has none of these."
             },
             "caseCount": {
               "anyOf": [
@@ -3876,6 +3895,13 @@
             "titleWithoutTags": {
               "description": "`title` with `@tag` words removed and spaces tidied.",
               "type": "string"
+            },
+            "unfollowedDependencies": {
+              "description": "Where the test reaches what couldn't be followed: the file and line of each place, as `support/venues.ts:2`, sorted; empty when `hasUnfollowedDependencies` is false. A `dependency-not-followed` warning at the place says what it is.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
             }
           },
           "required": [
@@ -3884,6 +3910,7 @@
             "dependencyHash",
             "dependencies",
             "hasUnfollowedDependencies",
+            "unfollowedDependencies",
             "suiteId",
             "parentTestId",
             "suitePath",
