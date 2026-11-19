@@ -1,5 +1,11 @@
 # test-inventory-mcp
 
+## 0.10.1
+
+### Patch Changes
+
+- [#56](https://github.com/Huldoser/test-inventory-mcp/pull/56) [`e0f1d9b`](https://github.com/Huldoser/test-inventory-mcp/commit/e0f1d9bec17a2711498e245547dfab1447ca7f20) - Require test-inventory 0.11.1 for parser fixes, imported table counts and diff reporting when a conditional skip becomes unconditional or vice versa.
+
 ## 0.10.0
 
 ### Minor Changes
