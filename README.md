@@ -10,8 +10,8 @@ client; its model provider and privacy settings determine what happens to that t
 
 ## Setup
 
-The server requires test-inventory 0.11.0 or a later 0.11 patch, including its
-[support for older runner versions and where each test reaches code the scan can't follow](https://github.com/Huldoser/test-inventory/releases/tag/v0.11.0).
+The server requires [test-inventory 0.11.1](https://github.com/Huldoser/test-inventory/releases/tag/v0.11.1) or a later
+0.11 patch. It counts the rows of imported test tables when the row count is known and some values are unknown.
 
 Node.js 22.12 or newer. The client starts the server with `npx` and talks to it over standard input and output. The
 server scans the test files your test runner's config runs, with the runner `--framework` names or, without
@@ -142,6 +142,8 @@ say.
 `total`, `nextCursor`, `hashesComparable`, `warnings` and `hint`. It does not scan or write files. Use the same
 framework, root, patterns, filters and `expandCases` setting for both scans. Hash comparisons and rename matching
 need the exact same core version. Incomplete scans produce warnings. Zero changes returns an empty page and a hint.
+With scans compared by this server, a conditional skip becoming unconditional counts as `newlySkipped`. The reverse
+counts as `reEnabled`.
 Each saved file must be a regular file of at most 128 MiB. Save scans with the core CLI, without `--fields` or
 `--format jsonl`; see [inventory diffs](https://huldoser.github.io/test-inventory/guide/diff). If a saved file disappears or becomes unreadable while opening it, the error names the supplied file and suggests checking its existence and readability, without exposing the resolved host path. Cancellation during these operations retains the request's cancellation reason.
 
