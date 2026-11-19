@@ -496,11 +496,11 @@ Response:
   "schemaVersion": 1,
   "tool": {
     "name": "test-inventory",
-    "version": "0.11.0"
+    "version": "0.11.1"
   },
   "framework": "playwright",
-  "beforeToolVersion": "0.11.0",
-  "afterToolVersion": "0.11.0",
+  "beforeToolVersion": "0.11.1",
+  "afterToolVersion": "0.11.1",
   "hashesComparable": true,
   "summary": {
     "added": 0,
