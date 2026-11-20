@@ -185,6 +185,7 @@ local operation. To report a vulnerability, see [SECURITY.md](SECURITY.md).
 
 Tool names, their arguments and their answers are the server's API. Before 1.0, a change that breaks them raises the
 minor version. The setup examples use `test-inventory-mcp@latest` so each launch requests npm's latest published release.
+If npm enforces a minimum release age, `npx` can select an earlier version until the new release is old enough.
 
 ## License
 
