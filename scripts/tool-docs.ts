@@ -110,6 +110,7 @@ export async function toolDocs(): Promise<string> {
       JSON.stringify(await scan({ root, framework: 'playwright', patterns: ['tests/**/*.spec.ts'] })),
     );
     const requests: Record<string, Record<string, unknown>> = {
+      get_run_commands: { related: ['tests/login.spec.ts'] },
       test_summary: { states: ['skip', 'fixme'], groupBy: 'file', limit: 2 },
       find_tests: { states: ['skip', 'fixme'], fields: ['fullName', 'state', 'condition', 'reason'], limit: 2 },
       get_tests: { ids: [inventory.tests.find((test) => test.isFixme)?.id] },
@@ -129,7 +130,7 @@ export async function toolDocs(): Promise<string> {
       '',
       '## Shared behavior',
       '',
-      '- The four scan tools reread files on each call. diff_inventories reads saved scans instead.',
+      '- The scan tools reread files on each call. diff_inventories reads saved scans instead.',
       '- Input objects reject unknown keys. Keep the other arguments unchanged when passing nextCursor back as cursor.',
       '- A null nextCursor ends pagination. get_tests uses remaining ids instead of a cursor when a response is full.',
       '- directory and related paths are relative to the configured server root. patterns and diagnostic path are relative to directory; narrowing directory does not change the base of related.',
@@ -138,6 +139,7 @@ export async function toolDocs(): Promise<string> {
       '- A declared conditional state is not a run result. Expected failures execute. Related tests are candidates, not proof that other tests are safe to omit.',
       '',
     ];
+    const since: Record<string, string> = { diff_inventories: '0.8.0', get_run_commands: '0.12.0' };
     for (const tool of tools as Tool[]) {
       const args = requests[tool.name];
       const result = await client.callTool({ name: tool.name, arguments: args });
@@ -145,7 +147,7 @@ export async function toolDocs(): Promise<string> {
       lines.push(
         `## ${tool.name}`,
         '',
-        `Available since MCP ${tool.name === 'diff_inventories' ? '0.8.0' : '0.1.0'}. Arguments added later have their own compatibility requirements; see [versioning](../README.md#versioning).`,
+        `Available since MCP ${since[tool.name] ?? '0.1.0'}. Arguments added later have their own compatibility requirements; see [versioning](../README.md#versioning).`,
         '',
         tool.description ?? '',
         '',
