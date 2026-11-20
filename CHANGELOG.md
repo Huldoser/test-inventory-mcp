@@ -1,5 +1,11 @@
 # test-inventory-mcp
 
+## 0.11.0
+
+### Minor Changes
+
+- [#58](https://github.com/Huldoser/test-inventory-mcp/pull/58) [`20c623b`](https://github.com/Huldoser/test-inventory-mcp/commit/20c623b64d1ae361c1211e230f59f07aa47e2486) - Use test-inventory 0.12.0 to match changed paths against literal Vite module globs and resolve Vitest projects from their configured root. Request `dependencyGlobs` to see the patterns behind a match.
+
 ## 0.10.1
 
 ### Patch Changes
