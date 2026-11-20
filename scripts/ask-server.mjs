@@ -1,11 +1,11 @@
 // Usage: node scripts/ask-server.mjs <project>
 //
 // Starts the test-inventory-mcp installed in <project> as an MCP client does, asks it for the skipped tests of
-// tests/*.spec.ts over stdio, and checks that standard output holds nothing but the two answers. Plain JavaScript, so
+// tests/*.spec.ts over stdio, and checks the responses, including changed paths that match a Vite glob. Plain JavaScript, so
 // that it also runs on Node.js versions that can't run TypeScript.
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
-import { writeFileSync } from 'node:fs';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -25,12 +25,19 @@ for (const [file, source] of [
     JSON.stringify(scanSource({ code: source, framework: 'playwright', relativeFilePath: 'tests/orders.spec.ts' })),
   );
 }
+mkdirSync(path.join(app, 'tests', 'venues'));
+writeFileSync(path.join(app, 'tests', 'venues', 'continuous.js'), 'export const openingHour = 8;');
+writeFileSync(
+  path.join(app, 'tests', 'venues.test.ts'),
+  "import { test } from 'vitest'; test('loads the venue roster', () => Object.keys(import.meta.glob('./venues/*.js')));",
+);
 const child = spawn(process.execPath, [bin, 'tests/*.spec.ts', '--framework', 'playwright'], { cwd: app });
 let stdout = '';
 child.stdout.setEncoding('utf8').on('data', (chunk) => {
   stdout += chunk;
-  // Closing standard input ends the server, so it waits for the scan and diff answers too.
-  if (stdout.split('\n').filter(Boolean).length === 3) child.stdin.end();
+  // Closing standard input ends the server, so wait for every response.
+  if (stdout.split('\n').filter(Boolean).length === messages.filter((message) => 'id' in message).length)
+    child.stdin.end();
 });
 child.stderr.pipe(process.stderr);
 const exit = new Promise((resolve) => child.on('exit', resolve));
@@ -49,11 +56,25 @@ const messages = [
     method: 'tools/call',
     params: { name: 'diff_inventories', arguments: { before: 'before.json', after: 'after.json' } },
   },
+  ...['tests/venues/auction.js', 'tests/prices/auction.js'].map((file, index) => ({
+    jsonrpc: '2.0',
+    id: 4 + index,
+    method: 'tools/call',
+    params: {
+      name: 'find_tests',
+      arguments: {
+        framework: 'vitest',
+        patterns: ['tests/*.test.ts'],
+        related: [file],
+        fields: ['fullName', 'dependencyGlobs'],
+      },
+    },
+  })),
 ];
 for (const message of messages) child.stdin.write(`${JSON.stringify(message)}\n`);
 assert.equal(await exit, 0);
 const lines = stdout.trimEnd().split('\n');
-assert.equal(lines.length, 3, stdout);
+assert.equal(lines.length, 5, stdout);
 const responses = new Map(
   lines.map((line) => {
     const message = JSON.parse(line);
@@ -67,6 +88,11 @@ assert.equal(initialized.result.serverInfo.name, 'test-inventory-mcp');
 const names = found.result.structuredContent.tests.map((test) => test.fullName);
 assert.deepEqual(names, ['fills a limit order at the limit price']);
 assert.equal(compared.result.structuredContent.summary.reEnabled, 1);
+const globMatch = responses.get(4).result.structuredContent;
+assert.equal(globMatch.total, 1);
+assert.equal(globMatch.tests[0].fullName, 'loads the venue roster');
+assert.ok(globMatch.tests[0].dependencyGlobs.some((patterns) => patterns.includes('tests/venues/*.js')));
+assert.equal(responses.get(5).result.structuredContent.total, 0);
 console.log(
   `test-inventory-mcp ${initialized.result.serverInfo.version} answered over stdio on Node.js ${process.version}.`,
 );

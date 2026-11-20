@@ -98,8 +98,8 @@ const testFilters = {
     .optional()
     .describe(
       'Changed files, relative to the project root as `git diff --name-only` writes them, such as ' +
-        '["pages/order-ticket.ts"]. Keeps the tests a change to one of them can affect: those whose dependencies ' +
-        "include it, and those that reach code the scan can't follow (hasUnfollowedDependencies).",
+        '["pages/order-ticket.ts"]. Keeps tests that list a changed dependency, match a changed file through ' +
+        'dependencyGlobs (including new or deleted files), or have hasUnfollowedDependencies.',
     ),
 };
 
