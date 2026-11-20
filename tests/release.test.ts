@@ -5,11 +5,11 @@ import {
   changelogEntry,
   compareUrl,
   nextVersion,
-  outdatedPins,
   pullRequestBody,
   releaseBranch,
   releaseTitle,
   repositorySlug,
+  setupUsesLatest,
 } from '../scripts/release-plan.ts';
 
 // What `changeset status --output` writes for one pending minor changeset.
@@ -49,17 +49,27 @@ const CHANGELOG = `# test-inventory-mcp
 
 const TEMPLATE = readFileSync(path.resolve(import.meta.dirname, '../.github/pull_request_template.md'), 'utf8');
 
-const README = `Claude Code, in the project folder:
+const README = `## Setup
+
+Check Node.js first:
 
 \`\`\`sh
-claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.2 --framework playwright
+node --version
+\`\`\`
+
+Claude Code, in the project folder:
+
+\`\`\`sh
+claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@latest --framework playwright
 \`\`\`
 
 \`\`\`json
-{ "args": ["-y", "test-inventory-mcp@0.2", "--framework", "playwright"] }
+{ "args": ["-y", "test-inventory-mcp@latest", "--framework", "playwright"] }
 \`\`\`
 
-Before 1.0, a change that breaks them raises the minor version, so \`test-inventory-mcp@0.2\` gets fixes only.
+## Command line
+
+\`test-inventory-mcp --version\`
 `;
 
 describe('release plan', () => {
@@ -103,11 +113,14 @@ describe('release plan', () => {
     expect(body).toContain('Quotes `$&` in titles.');
   });
 
-  it("lists the README's pins of an older minor version, which a new minor has to replace", () => {
-    expect(outdatedPins(README, '0.3.0')).toEqual(['test-inventory-mcp@0.2']);
-    expect(outdatedPins(README, '0.2.1')).toEqual([]);
-    expect(outdatedPins(README.replaceAll('@0.2', '@0.3'), '0.3.0')).toEqual([]);
-    expect(outdatedPins('No setup here.', '0.3.0')).toEqual([]);
+  it("requires npm's latest tag in each setup example", () => {
+    expect(setupUsesLatest(README)).toBe(true);
+    for (const spec of ['test-inventory-mcp@0.2', 'test-inventory-mcp@next', 'test-inventory-mcp']) {
+      expect(setupUsesLatest(README.replace('test-inventory-mcp@latest', spec))).toBe(false);
+      expect(setupUsesLatest(README.replace('"test-inventory-mcp@latest"', JSON.stringify(spec)))).toBe(false);
+    }
+    expect(setupUsesLatest('No setup here.')).toBe(false);
+    expect(setupUsesLatest(readFileSync(new URL('../README.md', import.meta.url), 'utf8'))).toBe(true);
   });
 
   it('reads the GitHub repository from package.json', () => {

@@ -20,7 +20,7 @@ it, the one the project uses. Globs pick the files instead, as on test-inventory
 **Claude Code**, in the project folder. `--scope project` writes `.mcp.json`, for everyone who works on the project:
 
 ```sh
-claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.12 --framework playwright
+claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@latest --framework playwright
 ```
 
 **Cursor**, in `.cursor/mcp.json`:
@@ -30,7 +30,7 @@ claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.12 
   "mcpServers": {
     "test-inventory": {
       "command": "npx",
-      "args": ["-y", "test-inventory-mcp@0.12", "--framework", "playwright"]
+      "args": ["-y", "test-inventory-mcp@latest", "--framework", "playwright"]
     }
   }
 }
@@ -44,7 +44,7 @@ claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.12 
     "test-inventory": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "test-inventory-mcp@0.12", "--framework", "playwright"]
+      "args": ["-y", "test-inventory-mcp@latest", "--framework", "playwright"]
     }
   }
 }
@@ -61,7 +61,7 @@ the folder the client starts the server in.
 
 1. Open your client's MCP server list and confirm that `test-inventory` is connected. In Claude Code use `/mcp`;
    in VS Code run **MCP: List Servers** from the Command Palette; in Cursor open its MCP settings.
-2. Confirm the six tools below are available, then ask: "Use test-inventory to summarize this project's tests."
+2. Confirm the client lists `test_summary`, then ask it to summarize this project's tests.
 3. Check that `test_summary` reports the expected framework and file counts. If it reports `scanErrors`, ask the
    agent to call `scan_diagnostics` before trusting the counts.
 
@@ -95,7 +95,7 @@ complete request/response examples, pagination and errors. It is checked against
 | `get_tests`        | Every key of up to 20 tests by `ids`, with the scan's diagnostics about them; ids it can't find come back in `notFound`.           |
 | `scan_diagnostics` | The problems the scan found, such as a file that failed to parse, by `levels`, `codes` or `path`.                                  |
 | `diff_inventories` | Changes between saved scans named by `before` and `after`, including renames, moves and newly declared skip states.                |
-| `get_run_commands` | Runner commands for the test files a change can affect, with their configs, projects, files and runner caveats.                    |
+| `get_run_commands` | MCP 0.12.0+: runner commands for the test files a change can affect, with their configs, projects, files and runner caveats.       |
 
 Pass `get_run_commands` a nonempty `related` list, such as `{"related":["tests/login.spec.ts"]}`.
 It uses the same changed-file matching as `find_tests`. Run a returned command from the scanned `directory` in a POSIX shell.
@@ -184,7 +184,8 @@ local operation. To report a vulnerability, see [SECURITY.md](SECURITY.md).
 ## Versioning
 
 Tool names, their arguments and their answers are the server's API. Before 1.0, a change that breaks them raises the
-minor version, so `test-inventory-mcp@0.12` in the setup above gets fixes only.
+minor version. The setup examples use `test-inventory-mcp@latest` so each launch requests npm's latest published release.
+If npm enforces a minimum release age, `npx` can select an earlier version until the new release is old enough.
 
 ## License
 

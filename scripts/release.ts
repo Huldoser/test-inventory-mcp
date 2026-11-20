@@ -14,11 +14,11 @@ import {
   changelogEntry,
   compareUrl,
   nextVersion,
-  outdatedPins,
   pullRequestBody,
   releaseBranch,
   releaseTitle,
   repositorySlug,
+  setupUsesLatest,
   type ReleasePlan,
 } from './release-plan.ts';
 
@@ -97,11 +97,8 @@ function check(name: string, folder: string): { problems: string[]; version: str
       .trim();
     problems.push(`changeset status failed${output ? `: ${output.replace(/\s*\n\s*/g, ' ')}` : '.'}`);
   }
-  const pins = version === null ? [] : outdatedPins(readFileSync(path.join(root, 'README.md'), 'utf8'), version);
-  if (pins.length > 0) {
-    problems.push(
-      `README.md installs ${pins.join(', ')}, not ${version}'s minor. Raise the pins in a pull request first, so new installs get this release.`,
-    );
+  if (!setupUsesLatest(readFileSync(path.join(root, 'README.md'), 'utf8'))) {
+    problems.push('Use test-inventory-mcp@latest in each README setup example.');
   }
   if (!process.env.GITHUB_TOKEN && !installed('gh')) {
     problems.push(
