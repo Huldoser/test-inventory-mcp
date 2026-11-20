@@ -56,6 +56,15 @@ const messages = [
     method: 'tools/call',
     params: { name: 'diff_inventories', arguments: { before: 'before.json', after: 'after.json' } },
   },
+  {
+    jsonrpc: '2.0',
+    id: 6,
+    method: 'tools/call',
+    params: {
+      name: 'get_run_commands',
+      arguments: { framework: 'vitest', patterns: ['tests/*.test.ts'], related: ['tests/venues/auction.js'] },
+    },
+  },
   ...['tests/venues/auction.js', 'tests/prices/auction.js'].map((file, index) => ({
     jsonrpc: '2.0',
     id: 4 + index,
@@ -74,7 +83,7 @@ const messages = [
 for (const message of messages) child.stdin.write(`${JSON.stringify(message)}\n`);
 assert.equal(await exit, 0);
 const lines = stdout.trimEnd().split('\n');
-assert.equal(lines.length, 5, stdout);
+assert.equal(lines.length, 6, stdout);
 const responses = new Map(
   lines.map((line) => {
     const message = JSON.parse(line);
@@ -93,6 +102,15 @@ assert.equal(globMatch.total, 1);
 assert.equal(globMatch.tests[0].fullName, 'loads the venue roster');
 assert.ok(globMatch.tests[0].dependencyGlobs.some((patterns) => patterns.includes('tests/venues/*.js')));
 assert.equal(responses.get(5).result.structuredContent.total, 0);
+assert.deepEqual(responses.get(6).result.structuredContent.commands, [
+  {
+    config: null,
+    projects: [],
+    files: ['tests/venues.test.ts'],
+    command: 'npx vitest run tests/venues.test.ts',
+    caveat: null,
+  },
+]);
 console.log(
   `test-inventory-mcp ${initialized.result.serverInfo.version} answered over stdio on Node.js ${process.version}.`,
 );

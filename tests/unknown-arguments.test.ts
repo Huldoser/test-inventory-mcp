@@ -4,6 +4,7 @@ import { callError, connect, tradingWeb } from './helpers.ts';
 describe.each(['2026-07-28', '2025-11-25'] as const)('%s unknown tool arguments', (era) => {
   it.each([
     ['find_tests', {}],
+    ['get_run_commands', { related: ['tests/login.spec.ts'] }],
     ['test_summary', {}],
     ['scan_diagnostics', {}],
     ['get_tests', { ids: ['EXAMPLE'] }],

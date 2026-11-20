@@ -11,10 +11,11 @@ The request examples show the tool name and arguments, without a JSON-RPC envelo
 - [get_tests](#get_tests)
 - [scan_diagnostics](#scan_diagnostics)
 - [diff_inventories](#diff_inventories)
+- [get_run_commands](#get_run_commands)
 
 ## Shared behavior
 
-- The four scan tools reread files on each call. diff_inventories reads saved scans instead.
+- The scan tools reread files on each call. diff_inventories reads saved scans instead.
 - Input objects reject unknown keys. Keep the other arguments unchanged when passing nextCursor back as cursor.
 - A null nextCursor ends pagination. get_tests uses remaining ids instead of a cursor when a response is full.
 - directory and related paths are relative to the configured server root. patterns and diagnostic path are relative to directory; narrowing directory does not change the base of related.
@@ -700,6 +701,71 @@ Response:
   ],
   "total": 1,
   "nextCursor": null,
+  "hint": null
+}
+```
+
+## get_run_commands
+
+Available since MCP 0.12.0. Arguments added later have their own compatibility requirements; see [versioning](../README.md#versioning).
+
+Returns POSIX shell commands for test files related to the changed paths. Run them from the scanned directory. Each command gives its config, projects, files and any runner caveat. A runner can run more tests than the matched declarations. The server only returns commands. Follow nextCursor for more.
+
+### Arguments
+
+| Field         | Type     | Required | Description                                                                                                                                                                                                                                                                                      |
+| ------------- | -------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `directory`   | string   | No       | A folder inside the project to scan, relative to its root, such as "packages/web". Default: the root. Minimum length: 1.                                                                                                                                                                         |
+| `framework`   | string   | No       | The test runner. Default: the one the server was started with, otherwise the one the project in `directory` uses. Values: `playwright`, `vitest`, `jest`, `mocha`, `jasmine`, `cypress`, `webdriverio`, `node`, `bun`.                                                                           |
+| `patterns`    | string[] | No       | Globs of the test files, relative to `directory`, such as ["tests/**/*.spec.ts"]. Default: the ones the server was started with, or without them the files the configs in `directory` and below it run. Minimum items: 1. Each item: Minimum length: 1.                                          |
+| `expandCases` | boolean  | No       | Lists each case of a .each or .for table and each pass of a loop as its own test, with the name the runner gives it and caseIndex, as the runner registers them. Ids differ from those without it, so pass the same value to get_tests. Default: false, one test per declaration with caseCount. |
+| `related`     | string[] | Yes      | Changed files relative to the server root, as git diff --name-only writes them. Minimum items: 1. Each item: Minimum length: 1.                                                                                                                                                                  |
+| `limit`       | integer  | No       | The most items to return. Default: `50`. Minimum: 1. Maximum: 200.                                                                                                                                                                                                                               |
+| `cursor`      | string   | No       | nextCursor from the previous answer, for the next page. Keep the other arguments the same. Minimum length: 1.                                                                                                                                                                                    |
+
+### Response fields
+
+| Field              | Type           | Required | Description                                                                   |
+| ------------------ | -------------- | -------- | ----------------------------------------------------------------------------- |
+| `framework`        | Framework      | Yes      |                                                                               |
+| `frameworkVersion` | string or null | Yes      |                                                                               |
+| `total`            | integer        | Yes      | All matching items, on every page.                                            |
+| `nextCursor`       | string or null | Yes      | Pass it as `cursor` for the next page; null on the last.                      |
+| `commands`         | object[]       | Yes      | One page of runner commands grouped by config and, for Cypress, testing type. |
+| `scanErrors`       | integer        | Yes      | Problems of level error in the scan, which may leave tests out of the answer. |
+| `hint`             | string or null | Yes      | What to do next, when there is something to say.                              |
+
+Nested test records use the [core output format](https://huldoser.github.io/test-inventory/reference/output).
+
+### Complete example
+
+```json
+{
+  "name": "get_run_commands",
+  "arguments": {
+    "related": ["tests/login.spec.ts"]
+  }
+}
+```
+
+Response:
+
+```json
+{
+  "framework": "playwright",
+  "frameworkVersion": "1.63.0",
+  "commands": [
+    {
+      "config": "playwright.config.ts",
+      "projects": ["chromium", "mobile-smoke", "webkit"],
+      "files": ["tests/login.spec.ts"],
+      "command": "npx playwright test tests/login.spec.ts --config playwright.config.ts --project chromium mobile-smoke webkit",
+      "caveat": null
+    }
+  ],
+  "total": 1,
+  "nextCursor": null,
+  "scanErrors": 0,
   "hint": null
 }
 ```

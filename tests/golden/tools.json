@@ -4188,5 +4188,219 @@
       "type": "object"
     },
     "title": "Diff inventories"
+  },
+  {
+    "annotations": {
+      "destructiveHint": false,
+      "idempotentHint": true,
+      "openWorldHint": false,
+      "readOnlyHint": true,
+      "title": "Get test run commands"
+    },
+    "description": "Returns POSIX shell commands for test files related to the changed paths. Run them from the scanned directory. Each command gives its config, projects, files and any runner caveat. A runner can run more tests than the matched declarations. The server only returns commands. Follow nextCursor for more.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "properties": {
+        "cursor": {
+          "description": "nextCursor from the previous answer, for the next page. Keep the other arguments the same.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "directory": {
+          "description": "A folder inside the project to scan, relative to its root, such as \"packages/web\". Default: the root.",
+          "minLength": 1,
+          "type": "string"
+        },
+        "expandCases": {
+          "description": "Lists each case of a .each or .for table and each pass of a loop as its own test, with the name the runner gives it and caseIndex, as the runner registers them. Ids differ from those without it, so pass the same value to get_tests. Default: false, one test per declaration with caseCount.",
+          "type": "boolean"
+        },
+        "framework": {
+          "description": "The test runner. Default: the one the server was started with, otherwise the one the project in `directory` uses.",
+          "enum": [
+            "playwright",
+            "vitest",
+            "jest",
+            "mocha",
+            "jasmine",
+            "cypress",
+            "webdriverio",
+            "node",
+            "bun"
+          ],
+          "type": "string"
+        },
+        "limit": {
+          "default": 50,
+          "description": "The most items to return.",
+          "maximum": 200,
+          "minimum": 1,
+          "type": "integer"
+        },
+        "patterns": {
+          "description": "Globs of the test files, relative to `directory`, such as [\"tests/**/*.spec.ts\"]. Default: the ones the server was started with, or without them the files the configs in `directory` and below it run.",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "related": {
+          "description": "Changed files relative to the server root, as git diff --name-only writes them.",
+          "items": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "related"
+      ],
+      "type": "object"
+    },
+    "name": "get_run_commands",
+    "outputSchema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "definitions": {
+        "Framework": {
+          "anyOf": [
+            {
+              "enum": [
+                "playwright",
+                "vitest",
+                "jest",
+                "mocha",
+                "jasmine",
+                "cypress",
+                "webdriverio",
+                "node",
+                "bun"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "properties": {
+        "commands": {
+          "description": "One page of runner commands grouped by config and, for Cypress, testing type.",
+          "items": {
+            "additionalProperties": false,
+            "properties": {
+              "caveat": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "command": {
+                "description": "POSIX shell command relative to the scanned directory.",
+                "type": "string"
+              },
+              "config": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "files": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "projects": {
+                "description": "An empty list selects all projects.",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            },
+            "required": [
+              "config",
+              "projects",
+              "files",
+              "command",
+              "caveat"
+            ],
+            "type": "object"
+          },
+          "type": "array"
+        },
+        "framework": {
+          "$ref": "#/definitions/Framework"
+        },
+        "frameworkVersion": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "hint": {
+          "anyOf": [
+            {
+              "description": "What to do next, when there is something to say.",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "nextCursor": {
+          "anyOf": [
+            {
+              "description": "Pass it as `cursor` for the next page; null on the last.",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "scanErrors": {
+          "description": "Problems of level error in the scan, which may leave tests out of the answer.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "total": {
+          "description": "All matching items, on every page.",
+          "minimum": 0,
+          "type": "integer"
+        }
+      },
+      "required": [
+        "framework",
+        "frameworkVersion",
+        "total",
+        "nextCursor",
+        "commands",
+        "scanErrors",
+        "hint"
+      ],
+      "type": "object"
+    },
+    "title": "Get test run commands"
   }
 ]
