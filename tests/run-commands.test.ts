@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import type { RunCommand } from 'test-inventory';
@@ -59,7 +59,7 @@ it('rejects changes outside the project and requires at least one changed path',
 });
 
 it('pages distinct runner configs when the same change affects both packages', async () => {
-  const root = mkdtempSync(path.join(tmpdir(), 'test-inventory-trading-'));
+  const root = realpathSync.native(mkdtempSync(path.join(tmpdir(), 'test-inventory-trading-')));
   try {
     const packages = ['options', 'stocks'];
     const related = packages.map((name) => name + '/quotes.test.ts');
