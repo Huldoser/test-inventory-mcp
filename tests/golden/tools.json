@@ -72,7 +72,7 @@
           "type": "array"
         },
         "related": {
-          "description": "Changed files, relative to the project root as `git diff --name-only` writes them, such as [\"pages/order-ticket.ts\"]. Keeps the tests a change to one of them can affect: those whose dependencies include it, and those that reach code the scan can't follow (hasUnfollowedDependencies).",
+          "description": "Changed files, relative to the project root as `git diff --name-only` writes them, such as [\"pages/order-ticket.ts\"]. Keeps tests that list a changed dependency, match a changed file through dependencyGlobs (including new or deleted files), or have hasUnfollowedDependencies.",
           "items": {
             "minLength": 1,
             "type": "string"
@@ -496,6 +496,7 @@
               "dependencyHash",
               "dependencies",
               "hasUnfollowedDependencies",
+              "dependencyGlobs",
               "unfollowedDependencies",
               "suiteId",
               "parentTestId",
@@ -616,7 +617,7 @@
           "type": "array"
         },
         "related": {
-          "description": "Changed files, relative to the project root as `git diff --name-only` writes them, such as [\"pages/order-ticket.ts\"]. Keeps the tests a change to one of them can affect: those whose dependencies include it, and those that reach code the scan can't follow (hasUnfollowedDependencies).",
+          "description": "Changed files, relative to the project root as `git diff --name-only` writes them, such as [\"pages/order-ticket.ts\"]. Keeps tests that list a changed dependency, match a changed file through dependencyGlobs (including new or deleted files), or have hasUnfollowedDependencies.",
           "items": {
             "minLength": 1,
             "type": "string"
@@ -1008,6 +1009,16 @@
                 "description": "The files that went into `dependencyHash`, the test's own included, sorted, with `/` separators.",
                 "items": {
                   "type": "string"
+                },
+                "type": "array"
+              },
+              "dependencyGlobs": {
+                "description": "Root-relative Vite module patterns, grouped by call. Within each group a leading ! excludes matching paths.",
+                "items": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
                 },
                 "type": "array"
               },
@@ -1912,6 +1923,16 @@
               },
               "type": "array"
             },
+            "dependencyGlobs": {
+              "description": "Root-relative Vite module patterns, grouped by call. Within each group a leading ! excludes matching paths.",
+              "items": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "type": "array"
+            },
             "dependencyHash": {
               "description": "Hash of everything the test runs in the project: its call, the hooks, options and code of the file and of every describe around it, and the functions, classes, constants and modules these use, followed through imports. Ignores whitespace and comments. Installed packages are not in it.",
               "pattern": "^[0-9a-f]{16}$",
@@ -2302,6 +2323,7 @@
             "dependencyHash",
             "dependencies",
             "hasUnfollowedDependencies",
+            "dependencyGlobs",
             "unfollowedDependencies",
             "suiteId",
             "parentTestId",
@@ -3129,6 +3151,7 @@
                       "dependencyHash",
                       "dependencies",
                       "hasUnfollowedDependencies",
+                      "dependencyGlobs",
                       "unfollowedDependencies",
                       "suiteId",
                       "parentTestId",
@@ -3235,6 +3258,7 @@
                       "dependencyHash",
                       "dependencies",
                       "hasUnfollowedDependencies",
+                      "dependencyGlobs",
                       "unfollowedDependencies",
                       "suiteId",
                       "parentTestId",
@@ -3341,6 +3365,7 @@
                       "dependencyHash",
                       "dependencies",
                       "hasUnfollowedDependencies",
+                      "dependencyGlobs",
                       "unfollowedDependencies",
                       "suiteId",
                       "parentTestId",
@@ -3517,6 +3542,16 @@
               "description": "The files that went into `dependencyHash`, the test's own included, sorted, with `/` separators.",
               "items": {
                 "type": "string"
+              },
+              "type": "array"
+            },
+            "dependencyGlobs": {
+              "description": "Root-relative Vite module patterns, grouped by call. Within each group a leading ! excludes matching paths.",
+              "items": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
               },
               "type": "array"
             },
@@ -3910,6 +3945,7 @@
             "dependencyHash",
             "dependencies",
             "hasUnfollowedDependencies",
+            "dependencyGlobs",
             "unfollowedDependencies",
             "suiteId",
             "parentTestId",

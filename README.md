@@ -10,8 +10,8 @@ client; its model provider and privacy settings determine what happens to that t
 
 ## Setup
 
-The server requires [test-inventory 0.11.1](https://github.com/Huldoser/test-inventory/releases/tag/v0.11.1) or a later
-0.11 patch. It counts the rows of imported test tables when the row count is known and some values are unknown.
+The server requires [test-inventory 0.12.0](https://github.com/Huldoser/test-inventory/releases/tag/v0.12.0) or a later
+0.12 patch. It resolves Vitest projects from their configured root and tracks literal Vite module globs.
 
 Node.js 22.12 or newer. The client starts the server with `npx` and talks to it over standard input and output. The
 server scans the test files your test runner's config runs, with the runner `--framework` names or, without
@@ -20,7 +20,7 @@ it, the one the project uses. Globs pick the files instead, as on test-inventory
 **Claude Code**, in the project folder. `--scope project` writes `.mcp.json`, for everyone who works on the project:
 
 ```sh
-claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.10 --framework playwright
+claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.11 --framework playwright
 ```
 
 **Cursor**, in `.cursor/mcp.json`:
@@ -30,7 +30,7 @@ claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.10 
   "mcpServers": {
     "test-inventory": {
       "command": "npx",
-      "args": ["-y", "test-inventory-mcp@0.10", "--framework", "playwright"]
+      "args": ["-y", "test-inventory-mcp@0.11", "--framework", "playwright"]
     }
   }
 }
@@ -44,7 +44,7 @@ claude mcp add --scope project test-inventory -- npx -y test-inventory-mcp@0.10 
     "test-inventory": {
       "type": "stdio",
       "command": "npx",
-      "args": ["-y", "test-inventory-mcp@0.10", "--framework", "playwright"]
+      "args": ["-y", "test-inventory-mcp@0.11", "--framework", "playwright"]
     }
   }
 }
@@ -112,8 +112,9 @@ version. The records have selected keys and their `id`. Pass a non-null `nextCur
 arguments to read another page; a narrow filter returning zero tests is a valid result.
 
 `related` takes the files a change touches, from the project root as `git diff --name-only` writes them, and keeps
-the tests whose `dependencies` include one of them, and those that reach code the scan can't follow, as
+tests that depend on a changed file, match it through a literal `import.meta.glob` pattern, or reach code the scan can't follow, as
 test-inventory's [`--related`](https://huldoser.github.io/test-inventory/guide/cli#tests-a-change-can-affect) does.
+Request `dependencyGlobs` in `fields` to see the patterns. They can match new or deleted files.
 The filter uses the actual scanned folder when `directory` names an internal link or an absolute path inside the project.
 It also keeps tests that import a changed helper elsewhere in the project, outside that scanned folder.
 `dependencies` can list hundreds of files, so it isn't among the default `fields`, and `get_tests` returns as many
@@ -177,7 +178,7 @@ local operation. To report a vulnerability, see [SECURITY.md](SECURITY.md).
 ## Versioning
 
 Tool names, their arguments and their answers are the server's API. Before 1.0, a change that breaks them raises the
-minor version, so `test-inventory-mcp@0.10` in the setup above gets fixes only.
+minor version, so `test-inventory-mcp@0.11` in the setup above gets fixes only.
 
 ## License
 
