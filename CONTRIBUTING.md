@@ -61,8 +61,7 @@ Tool names, their inputs and their output are the server's API. Before 1.0:
 Releases are made from `main`. Changesets collect there until a maintainer releases them; nothing is published until a
 release pull request is merged.
 
-A new minor version needs the README's setup commands to pin it, as `test-inventory-mcp@0.3`, so that new installs
-get it; raise them in a pull request before releasing. `npm run release` stops while they pin another minor.
+Use `test-inventory-mcp@latest` in each README setup example. The release check verifies the examples still follow npm's latest published version.
 
 Before releasing, read each pending changeset in `.changeset/` and check that the README describes it everywhere it
 applies: search it, and the tool descriptions in `src/server.ts`, for the old behaviour, such as a list of runners, a
@@ -70,7 +69,7 @@ default or a rule, and update each place in a pull request first. `tests/readme.
 every tool, argument, command line option and runner, but it can't read prose.
 
 1. On an up-to-date `main` with no local changes, run `npm run release`. It checks that `main` matches GitHub, that
-   changesets are waiting and that the README pins their minor, makes a `release-x.y.z` branch, runs
+   changesets are waiting and that the README setup examples use `@latest`, makes a `release-x.y.z` branch, runs
    `changeset version`, updates the lockfile, commits "Release x.y.z", pushes the branch and opens the pull request,
    with gh when it is installed and otherwise through a link it prints. `changeset version` reads a GitHub token to
    link each change to its pull request: `GITHUB_TOKEN` when it is set, otherwise the one gh is logged in with.

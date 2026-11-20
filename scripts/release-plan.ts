@@ -33,7 +33,7 @@ export function changelogEntry(changelog: string, version: string): string {
 
 /**
  * The release pull request's description: the repository's template, with the version and its changelog entry under
- * "What changed", and the two boxes that hold for every release ticked. The README's pins are checked before the
+ * "What changed", and the two boxes that hold for every release ticked. The setup examples are checked before the
  * release, and a release is where the changesets end up.
  */
 export function pullRequestBody(template: string, version: string, entry: string): string {
@@ -44,14 +44,15 @@ export function pullRequestBody(template: string, version: string, entry: string
     .replace(/^- \[ \] (A changeset describes)/m, '- [x] $1');
 }
 
-/**
- * The README's `test-inventory-mcp@0.x` pins of another minor version than `version`'s. The setup commands pin the
- * minor, so that a new install gets fixes only; a new minor has to move them, or installs stay on the old one.
- */
-export function outdatedPins(readme: string, version: string): string[] {
-  const minor = version.split('.').slice(0, 2).join('.');
-  const pins = readme.match(/test-inventory-mcp@\d+\.\d+/g) ?? [];
-  return [...new Set(pins)].filter((pin) => pin !== `test-inventory-mcp@${minor}`);
+/** Check the package arguments in the README's setup examples, excluding surrounding prose. */
+export function setupUsesLatest(readme: string): boolean {
+  const setup = readme.split(/^## Setup\r?$/m)[1]?.split(/^## /m)[0] ?? '';
+  const examples = Array.from(setup.matchAll(/^```[^\r\n]*\r?\n([\s\S]*?)^```/gm), ([, code]) => code);
+  const packages = examples
+    .join('\n')
+    .split(/[\s"',]+/)
+    .filter((arg) => arg === 'test-inventory-mcp' || arg.startsWith('test-inventory-mcp@'));
+  return packages.length > 0 && packages.every((arg) => arg === 'test-inventory-mcp@latest');
 }
 
 /** `owner/name` from a GitHub repository URL as package.json writes it; null for anything else. */
