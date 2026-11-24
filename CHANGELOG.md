@@ -1,5 +1,15 @@
 # test-inventory-mcp
 
+## 0.12.0
+
+### Minor Changes
+
+- [#60](https://github.com/Huldoser/test-inventory-mcp/pull/60) [`82209a7`](https://github.com/Huldoser/test-inventory-mcp/commit/82209a7ece6ba3b4247f43d1c026cc5c64c80a31) - Add `get_run_commands` to return runner commands for changed files, including the config, projects, files and runner caveats.
+
+### Patch Changes
+
+- [#62](https://github.com/Huldoser/test-inventory-mcp/pull/62) [`615fee6`](https://github.com/Huldoser/test-inventory-mcp/commit/615fee6e8f08d71998e1490d3a190b7eb3545b5d) - Use test-inventory 0.12.1 for configless Playwright scripts, re-exported Vitest tests and TypeScript parsing fixes.
+
 ## 0.11.0
 
 ### Minor Changes
