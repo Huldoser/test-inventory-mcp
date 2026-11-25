@@ -1,5 +1,12 @@
 # test-inventory-mcp
 
+## 0.12.1
+
+### Patch Changes
+
+- [#64](https://github.com/Huldoser/test-inventory-mcp/pull/64) [`dafae54`](https://github.com/Huldoser/test-inventory-mcp/commit/dafae546bb2ca0e4680e026eb59f2dff677f27d7) - Use test-inventory 0.12.2 for Mocha file selection, Jasmine registrations, Vitest suite modes and Jest and Bun table titles.
+  The MCP tool schemas now list `invalid-hook` for rejected Jasmine hook declarations.
+
 ## 0.12.0
 
 ### Minor Changes
