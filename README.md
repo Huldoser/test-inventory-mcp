@@ -10,10 +10,11 @@ client; its model provider and privacy settings determine what happens to that t
 
 ## Setup
 
-The server requires [test-inventory 0.12.1](https://github.com/Huldoser/test-inventory/releases/tag/v0.12.1) or a later
+The server requires [test-inventory 0.12.2](https://github.com/Huldoser/test-inventory/releases/tag/v0.12.2) or a later
 0.12 patch. It resolves Vitest projects from their configured root and tracks literal Vite module globs. It also
 discovers default specs when a package runs plain `playwright test` without a config and recognizes re-exported Vitest
-tests with extra arguments after the callback.
+tests with extra arguments after the callback. The server also follows Mocha file selection in package scripts,
+Jasmine registrations during generator execution, and the test titles Jest and Bun produce for table rows.
 
 Node.js 22.12 or newer. The client starts the server with `npx` and talks to it over standard input and output. The
 server scans the test files your test runner's config runs, with the runner `--framework` names or, without
