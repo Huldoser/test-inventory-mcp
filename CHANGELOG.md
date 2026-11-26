@@ -1,5 +1,11 @@
 # test-inventory-mcp
 
+## 0.12.2
+
+### Patch Changes
+
+- [#67](https://github.com/Huldoser/test-inventory-mcp/pull/67) [`1f01f08`](https://github.com/Huldoser/test-inventory-mcp/commit/1f01f0837c3cc041d6ea61a3b40d6934439d930e) - Simplify server setup, add example prompts and shorten the npm package description.
+
 ## 0.12.1
 
 ### Patch Changes
